@@ -1,26 +1,391 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <title>香香编程-投票项目</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票详情 - {{.vote.Title}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .vote-detail {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .vote-title {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 24px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .vote-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            color: #333;
+            font-size: 16px;
+        }
+        .vote-type {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .vote-status {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .vote-status.expired {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .vote-options {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .options-title {
+            color: #333;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .option-item:hover {
+            background-color: #f8f9fa;
+        }
+        .option-input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+        .option-label {
+            flex: 1;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+        }
+        .option-count {
+            color: #666;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .vote-form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .back-link::before {
+            content: "←";
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+        .result-summary {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .result-summary h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        .result-summary p {
+            margin: 0;
+            color: #666;
+            font-size: 16px;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .result-rank {
+            background-color: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .result-rank.gold {
+            background-color: #ffd700;
+            color: #333;
+        }
+        .result-rank.silver {
+            background-color: #c0c0c0;
+            color: #333;
+        }
+        .result-rank.bronze {
+            background-color: #cd7f32;
+            color: white;
+        }
+        .result-content {
+            flex: 1;
+        }
+        .result-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .result-stats {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        .result-percentage {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
-<main>
-    <h2>title:{{.vote.Vote.Title}}</h2>
-    <h2>id:{{.vote.Vote.Id}}</h2>
-    <h2>UserId:{{.vote.Vote.UserId}}</h2>
-    <h2>Type:{{.vote.Vote.Type}}</h2>
-    <h2>Status:{{.vote.Vote.Status}}</h2>
+    <a href="/index" class="back-link">返回首页</a>
 
+    <div class="header">
+        <h1>{{if .isResult}}投票结果{{else}}投票详情{{end}}</h1>
+    </div>
 
-    <form method="post" action="/vote">
-        <input type="hidden" name="vote_id" value="{{.vote.Vote.Id}}">
-        {{range $key,$value := .vote.Opt}}
-            <input type="checkbox" name="opt[]" id="customCheck{{$key}}" value="{{$value.Id}}">
-            <label  for="customCheck{{$key}}">{{$value.Name}}</label>
+    {{if .error}}
+        <div class="error-message">
+            {{.error}}
+        </div>
+    {{end}}
+
+    {{if .success}}
+        <div class="success-message">
+            {{.success}}
+        </div>
+    {{end}}
+
+    <div class="vote-detail">
+        <h2 class="vote-title">{{.vote.Title}}</h2>
+        
+        <div class="vote-info">
+            <div class="info-item">
+                <div class="info-label">投票ID</div>
+                <div class="info-value">{{.vote.Id}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">创建人ID</div>
+                <div class="info-value">{{.vote.UserId}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">投票类型</div>
+                <div class="info-value">
+                    <span class="vote-type">
+                        {{if eq .vote.Type 0}}单选{{else}}多选{{end}}
+                    </span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">投票状态</div>
+                <div class="info-value">
+                    <span class="vote-status {{if eq .vote.Status 1}}expired{{end}}">
+                        {{if eq .vote.Status 0}}正常{{else}}已超时{{end}}
+                    </span>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">有效时长</div>
+                <div class="info-value">{{.vote.Time}} 秒</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">创建时间</div>
+                <div class="info-value">{{.vote.CreatedTime.Format "2006-01-02 15:04:05"}}</div>
+            </div>
+        </div>
+    </div>
+
+    {{if .isResult}}
+        {{if .totalVotes}}
+            <div class="result-summary">
+                <h3>投票结果统计</h3>
+                <p>总投票数：<strong>{{.totalVotes}}</strong> 票</p>
+            </div>
         {{end}}
-        <button type="submit">Submit</button>
-    </form>
+    {{end}}
 
-</main>
+    {{if .voteOpts}}
+        <div class="vote-options">
+            <h3 class="options-title">
+                {{if .isResult}}投票结果{{else}}投票选项{{end}}
+            </h3>
+            
+            {{if .isResult}}
+                {{range $index, $value := .voteOpts}}
+                    <div class="result-item">
+                        <div class="result-rank {{if eq $index 0}}gold{{else if eq $index 1}}silver{{else if eq $index 2}}bronze{{end}}">
+                            {{add $index 1}}
+                        </div>
+                        <div class="result-content">
+                            <div class="result-name">{{$value.Name}}</div>
+                            <div class="result-stats">
+                                <span>得票数：{{$value.Count}} 票</span>
+                                {{if $.totalVotes}}
+                                    <span class="result-percentage">
+                                        得票率：{{$value.Count}} / {{$.totalVotes}}
+                                    </span>
+                                {{end}}
+                            </div>
+                        </div>
+                    </div>
+                {{end}}
+            {{else if eq .vote.Status 0}}
+                <form method="post" action="/vote" class="vote-form">
+                    <input type="hidden" name="vote_id" value="{{.vote.Id}}">
+                    
+                    {{range $key,$value := .voteOpts}}
+                        <div class="option-item">
+                            {{if eq $.vote.Type 0}}
+                                <input type="radio" name="opt" id="opt{{$value.Id}}" value="{{$value.Id}}" class="option-input" required>
+                            {{else}}
+                                <input type="checkbox" name="opt[]" id="opt{{$value.Id}}" value="{{$value.Id}}" class="option-input">
+                            {{end}}
+                            <label for="opt{{$value.Id}}" class="option-label">{{$value.Name}}</label>
+                            <span class="option-count">({{$value.Count}} 票)</span>
+                        </div>
+                    {{end}}
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn">提交投票</button>
+                        <a href="/vote/{{.vote.Id}}/result" class="btn btn-secondary">查看结果</a>
+                    </div>
+    </form>
+            {{else}}
+                <div class="vote-options">
+                    <p style="color: #dc3545; font-weight: bold;">此投票已结束，无法参与投票</p>
+                    {{range $key,$value := .voteOpts}}
+                        <div class="option-item">
+                            <div class="option-label">{{$value.Name}}</div>
+                            <span class="option-count">({{$value.Count}} 票)</span>
+                        </div>
+                    {{end}}
+                    <div class="form-actions">
+                        <a href="/vote/{{.vote.Id}}/result" class="btn">查看详细结果</a>
+                    </div>
+                </div>
+            {{end}}
+        </div>
+    {{else}}
+        <div class="vote-options">
+            <p style="color: #666; text-align: center;">暂无投票选项</p>
+        </div>
+    {{end}}
 </body>
 </html>

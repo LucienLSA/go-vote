@@ -4,15 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"govote/app/types"
-
-	"gorm.io/gorm"
 )
-
-type User struct {
-	gorm.Model
-	Name     string `gorm:"type:varchar(50);not null"`
-	Password string `gorm:"type:varchar(50);not null"`
-}
 
 func GetUser(userInfo *types.UserInfo) *User {
 	// 查询数据库中的用户
@@ -23,6 +15,15 @@ func GetUser(userInfo *types.UserInfo) *User {
 	}
 	if user.Password != userInfo.Password {
 		fmt.Printf("查询失败: %s\n", errors.New("密码错误"))
+	}
+	return &user
+}
+
+func GetUserByName(username string) *User {
+	var user User
+	err := DB.Where("name = ?", username).First(&user).Error
+	if err != nil {
+		fmt.Printf("查询失败: %s\n", err)
 	}
 	return &user
 }

@@ -27,11 +27,13 @@ func Init() error {
 	// 先赋值DB变量，再进行自动迁移
 	DB = conn
 
-	err = DB.AutoMigrate(&User{})
+	// 迁移所有表
+	err = DB.AutoMigrate(&User{}, &Vote{}, &VoteOpt{}, &VoteOptUser{})
 	if err != nil {
 		fmt.Printf("数据库迁移失败: %s\n", err)
 		return err
 	}
+
 	return nil
 }
 
