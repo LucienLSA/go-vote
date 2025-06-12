@@ -2,55 +2,55 @@ package model
 
 import "time"
 
-type User struct {
-	Id          int64  `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
-	Name        string `gorm:"column:name;default:NULL"`
-	Password    string `gorm:"column:password;default:NULL"`
-	CreatedTime string `gorm:"column:created_time;default:NULL"`
-	UpdatedTime string `gorm:"column:updated_time;default:NULL"`
-}
-
-// TableName 表名
-func (u *User) TableName() string {
-	return "user"
-}
-
-type Vote struct {
-	Id          int64     `gorm:"column:id;type:bigint(20);primary_key;AUTO_INCREMENT" json:"id"`
-	Title       string    `gorm:"column:title;type:varchar(255)" json:"title"`
-	Type        int       `gorm:"column:type;type:int(11);comment:0单选1多选" json:"type"`
-	Status      int       `gorm:"column:status;type:int(11);comment:0正常1超时" json:"status"`
-	Time        int64     `gorm:"column:time;type:bigint(20);comment:有效时长" json:"time"`
-	UserId      int64     `gorm:"column:user_id;type:bigint(20);comment:创建人" json:"user_id"`
-	CreatedTime time.Time `gorm:"column:created_time;type:datetime" json:"created_time"`
-	UpdatedTime time.Time `gorm:"column:updated_time;type:datetime" json:"updated_time"`
-}
-
-func (m *Vote) TableName() string {
-	return "vote"
-}
-
 type VoteOptUser struct {
-	Id          int64     `gorm:"column:id;type:bigint(20);primary_key;AUTO_INCREMENT" json:"id"`
-	UserId      int64     `gorm:"column:user_id;type:bigint(20)" json:"user_id"`
-	VoteId      int64     `gorm:"column:vote_id;type:bigint(20)" json:"vote_id"`
-	VoteOptId   int64     `gorm:"column:vote_opt_id;type:bigint(20)" json:"vote_opt_id"`
-	CreatedTime time.Time `gorm:"column:created_time;type:datetime" json:"created_time"`
+	Id          int64     `gorm:"column:id;primary_key;NOT NULL"`
+	UserId      int64     `gorm:"column:user_id;default:NULL"`
+	VoteId      int64     `gorm:"column:vote_id;default:NULL"`
+	VoteOptId   int64     `gorm:"column:vote_opt_id;default:NULL"`
+	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
 }
 
-func (m *VoteOptUser) TableName() string {
+func (v *VoteOptUser) TableName() string {
 	return "vote_opt_user"
 }
 
 type VoteOpt struct {
-	Id          int64     `gorm:"column:id;type:bigint(20);primary_key;AUTO_INCREMENT" json:"id"`
-	Name        string    `gorm:"column:name;type:varchar(255)" json:"name"`
-	VoteId      int64     `gorm:"column:vote_id;type:bigint(20)" json:"vote_id"`
-	Count       int       `gorm:"column:count;type:int(11)" json:"count"`
-	CreatedTime time.Time `gorm:"column:created_time;type:datetime" json:"created_time"`
-	UpdatedTime time.Time `gorm:"column:updated_time;type:datetime" json:"updated_time"`
+	Id          int64     `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
+	Name        string    `gorm:"column:name;default:NULL"`
+	VoteId      int64     `gorm:"column:vote_id;default:NULL"`
+	Count       int32     `gorm:"column:count;default:NULL"`
+	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
+	UpdatedTime time.Time `gorm:"column:updated_time;default:NULL"`
 }
 
-func (m *VoteOpt) TableName() string {
+func (v *VoteOpt) TableName() string {
 	return "vote_opt"
+}
+
+type Vote struct {
+	Id          int64     `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
+	Title       string    `gorm:"column:title;default:NULL"`
+	Type        int32     `gorm:"column:type;default:NULL;comment:'0单选1多选'"`
+	Status      int32     `gorm:"column:status;default:NULL;comment:'0正常1超时'"`
+	Time        int64     `gorm:"column:time;default:NULL;comment:'有效时长'"`
+	UserId      int64     `gorm:"column:user_id;default:NULL;comment:'创建人'"`
+	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
+	UpdatedTime time.Time `gorm:"column:updated_time;default:NULL"`
+}
+
+func (v *Vote) TableName() string {
+	return "vote"
+}
+
+type User struct {
+	Id          int64     `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
+	Name        string    `gorm:"column:name;default:NULL"`
+	Password    string    `gorm:"column:password;default:NULL"`
+	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
+	UpdatedTime time.Time `gorm:"column:updated_time;default:NULL"`
+}
+
+type VoteWithOpt struct {
+	Vote Vote
+	Opt  []VoteOpt
 }

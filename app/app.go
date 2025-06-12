@@ -1,20 +1,16 @@
 package app
 
 import (
-	"fmt"
 	"govote/app/model"
 	"govote/app/router"
 )
 
+// Start 启动器方法
 func Start() {
-	// 初始化数据库
-	err := model.Init()
-	if err != nil {
-		fmt.Printf("数据库初始化失败: %s\n", err)
-		return
-	}
+	model.NewMysql()
 	defer func() {
 		model.Close()
 	}()
-	err = router.Init()
+
+	router.New()
 }

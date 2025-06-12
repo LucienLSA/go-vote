@@ -2,63 +2,41 @@ package logic
 
 import (
 	"govote/app/model"
+	"govote/app/tools/e"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Index(context *gin.Context) {
-	// 获取当前登录用户
-	name, err := context.Cookie("name")
-	userName := ""
-	if err == nil && name != "" {
-		userName = name
-	}
-	// 从数据库获取真实的投票数据
-	dbVotes := model.GetVotes()
+	ret := model.GetVotes()
+	context.HTML(http.StatusOK, "index.html", gin.H{"vote": ret})
+}
 
-	// 转换为模板需要的格式
-	votes := make([]map[string]interface{}, 0, len(dbVotes))
-	normalCount := 0
-	expiredCount := 0
-	singleCount := 0
-	multiCount := 0
+func GetVoteInfo(context *gin.Context) {
+	var id int64
+	idStr := context.Query("id")
+	id, _ = strconv.ParseInt(idStr, 10, 64)
+	ret := model.GetVote(id)
+	context.HTML(http.StatusOK, "vote.html", gin.H{"vote": ret})
+}
 
-	for _, vote := range dbVotes {
-		voteData := map[string]interface{}{
-			"Id":     vote.Id,
-			"Title":  vote.Title,
-			"Type":   vote.Type,
-			"Status": vote.Status,
-			"Time":   vote.Time,
-			"UserId": vote.UserId,
-		}
-		votes = append(votes, voteData)
+func DoVote(context *gin.Context) {
+	userIDStr, _ := context.Cookie("Id")
+	voteIdStr, _ := context.GetPostForm("vote_id")
+	optStr, _ := context.GetPostFormArray("opt[]")
 
-		// 统计数据
-		if vote.Status == 0 {
-			normalCount++
-		} else {
-			expiredCount++
-		}
-
-		if vote.Type == 0 {
-			singleCount++
-		} else {
-			multiCount++
-		}
+	userID, _ := strconv.ParseInt(userIDStr, 10, 64)
+	voteId, _ := strconv.ParseInt(voteIdStr, 10, 64)
+	opt := make([]int64, 0)
+	for _, v := range optStr {
+		optId, _ := strconv.ParseInt(v, 10, 64)
+		opt = append(opt, optId)
 	}
 
-	// 创建模板数据
-	data := gin.H{
-		"vote":         votes,
-		"userName":     userName,
-		"isLogin":      userName != "",
-		"normalCount":  normalCount,
-		"expiredCount": expiredCount,
-		"singleCount":  singleCount,
-		"multiCount":   multiCount,
-	}
-
-	context.HTML(http.StatusOK, "index.html", data)
+	model.DoVote(userID, voteId, opt)
+	context.JSON(http.StatusOK, e.ECode{
+		Message: "投票完成",
+	})
 }

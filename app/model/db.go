@@ -3,41 +3,38 @@ package model
 import (
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
-var DB *gorm.DB
+// 数据库操作都放在这里
 
-func Init() error {
-	my := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		"root", "123456", "127.0.0.1:3306", "vote")
+var Conn *gorm.DB
+
+func NewMysql() {
+	my := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", "root", "123456", "localhost:3306", "vote")
+	var ormLogger logger.Interface
+	ormLogger = logger.Default.LogMode(logger.Info)
 	conn, err := gorm.Open(mysql.Open(my), &gorm.Config{
+		Logger: ormLogger,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
 	})
 	if err != nil {
-		fmt.Printf("数据库连接失败: %s\n", err)
-		return err
+		fmt.Printf("err:%s\n", err)
+		panic(err)
 	}
-
-	// 先赋值DB变量，再进行自动迁移
-	DB = conn
-
-	// 迁移所有表
-	err = DB.AutoMigrate(&User{}, &Vote{}, &VoteOpt{}, &VoteOptUser{})
+	err = conn.AutoMigrate(&Vote{}, &User{}, &VoteOpt{}, &VoteOptUser{})
 	if err != nil {
-		fmt.Printf("数据库迁移失败: %s\n", err)
-		return err
+		return
 	}
-
-	return nil
+	Conn = conn
 }
 
 func Close() {
-	db, _ := DB.DB()
+	db, _ := Conn.DB()
 	_ = db.Close()
 }
