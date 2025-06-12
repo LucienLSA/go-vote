@@ -35,8 +35,16 @@ func New() {
 		r.GET("/login", logic.GetLogin)
 		r.POST("/login", logic.DoLogin)
 		r.GET("/logout", logic.Logout)
+
+		//user
+		r.POST("/user/create", logic.CreateUser)
 	}
 
+	//验证码
+	{
+		r.GET("/captcha/generate", logic.GenerateCaptcha)
+		r.POST("/captcha/verify", logic.VerifyCaptchaHandler)
+	}
 	if err := r.Run(":8080"); err != nil {
 		panic("gin 启动失败！")
 	}

@@ -30,7 +30,7 @@ func TestLoginFunctionality(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			user := model.GetUser(tc.username)
+			user, _ := model.GetUser(tc.username)
 
 			if tc.expected {
 				// 期望登录成功

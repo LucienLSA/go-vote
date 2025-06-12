@@ -7,11 +7,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	Name     string `json:"name" form:"name"`
-	Password string `json:"password" form:"password"`
+	Name        string `json:"name" form:"name"`
+	Password    string `json:"password" form:"password"`
+	CaptchaId   string `json:"captcha_id" form:"captcha_id"`
+	CaptchaCode string `json:"captcha_code" form:"captcha_code"`
 }
 
 func GetLogin(context *gin.Context) {
@@ -31,22 +34,34 @@ func DoLogin(context *gin.Context) {
 		return
 	}
 
-	ret := model.GetUser(user.Name)
-	if ret.Id < 1 || ret.Password != user.Password {
+	// 验证码校验
+	if user.CaptchaId == "" || user.CaptchaCode == "" {
+		context.JSON(http.StatusOK, e.ECode{Code: 1, Message: "验证码ID或验证码不能为空"})
+		return
+	}
+	if !VerifyCaptcha(user.CaptchaId, user.CaptchaCode) {
+		context.JSON(http.StatusOK, e.ECode{Code: 1, Message: "验证码错误"})
+		return
+	}
+
+	ret, err := model.GetUser(user.Name)
+	if err != nil {
+		// 用户不存在或获取失败
 		context.JSON(http.StatusOK, e.UserErr)
 		return
 	}
 
-	// 登录成功，设置Cookie
-	// context.SetCookie("name", user.Name, 3600, "/", "", true, false)
-	// context.SetCookie("Id", fmt.Sprint(ret.Id), 3600, "/", "", true, false)
+	// 使用 bcrypt.CompareHashAndPassword 验证密码
+	if err := bcrypt.CompareHashAndPassword([]byte(ret.Password), []byte(user.Password)); err != nil {
+		// 密码不匹配
+		context.JSON(http.StatusOK, e.UserErr)
+		return
+	}
 	session.SetSession(context, user.Name, ret.Id)
-
 	context.JSON(http.StatusOK, e.OK)
 }
 
 func CheckUser(context *gin.Context) {
-	// name, err := context.Cookie("name")
 	var name string
 	var id int64
 	values := session.GetSession(context)
@@ -60,15 +75,10 @@ func CheckUser(context *gin.Context) {
 		context.JSON(http.StatusOK, e.NotLogin)
 		context.Abort()
 	}
-	// if err != nil || name == "" {
-	// 	context.Redirect(http.StatusFound, "/login")
-	// 	return
-	// }
 	context.Next()
 }
 
 func Logout(context *gin.Context) {
-	context.SetCookie("name", "", -1, "/", "", true, false)
-	context.SetCookie("Id", "", -1, "/", "", true, false)
+	session.FlushSession(context)
 	context.Redirect(http.StatusFound, "/login")
 }

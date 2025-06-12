@@ -36,6 +36,26 @@
             box-sizing: border-box;
             font-size: 14px;
         }
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .captcha-container input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .captcha-container img {
+            height: 40px; /* Adjust as needed */
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
         button {
             width: 100%;
             padding: 12px;
@@ -68,6 +88,18 @@
             text-align: center;
             display: none;
         }
+        .register-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -75,14 +107,36 @@
     <h2>用户登录</h2>
     <input type="text" name="name" id="name" placeholder="请输入用户名">
     <input type="password" name="password" id="password" placeholder="请输入密码">
+    <div class="captcha-container">
+        <input type="text" id="captcha_code" placeholder="请输入验证码">
+        <img id="captcha_image" src="" alt="验证码" title="点击刷新">
+    </div>
     <button type="submit" id="login_sub">登录</button>
     <div id="error_message" class="error-message"></div>
     <div id="success_message" class="success-message"></div>
+    <div class="register-link">
+        <a href="/register">还没有账号？立即注册</a>
+    </div>
 </main>
 
 <script>
+    var captchaId = ""; // 用于存储验证码ID
+
     $(document).ready(function(){
+        // 加载验证码
+        loadCaptcha();
+
+        // 点击验证码图片刷新
+        $("#captcha_image").on("click", function() {
+            loadCaptcha();
+        });
+
         // 回车键登录
+        $("#captcha_code").on("keypress", function(e) {
+            if(e.which == 13) {
+                $("#login_sub").click();
+            }
+        });
         $("#password").on("keypress", function(e) {
             if(e.which == 13) {
                 $("#login_sub").click();
@@ -93,6 +147,7 @@
             // 获取输入值
             var name = $("#name").val().trim();
             var password = $("#password").val().trim();
+            var captchaCode = $("#captcha_code").val().trim();
             
             // 验证输入
             if (!name) {
@@ -101,6 +156,10 @@
             }
             if (!password) {
                 showError("请输入密码");
+                return;
+            }
+            if (!captchaCode) {
+                showError("请输入验证码");
                 return;
             }
 
@@ -115,7 +174,9 @@
                 url: "/login",
                 data: {
                     name: name,
-                    password: password
+                    password: password,
+                    captcha_id: captchaId, // 验证码ID
+                    captcha_code: captchaCode // 用户输入的验证码
                 },
                 type: "post",
                 dataType: "json",
@@ -130,18 +191,43 @@
                         }, 1500);
                     } else {
                         // 登录失败
-                        showError(data.message || "登录失败，请重试");
+                        var errorMsg = data.message || "登录失败，请重试";
+                        showError(errorMsg);
                         $btn.prop('disabled', false).text('登录');
+                        loadCaptcha(); // 刷新验证码
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error("登录请求失败:", error);
                     showError("网络错误，请重试");
                     $btn.prop('disabled', false).text('登录');
+                    loadCaptcha(); // 刷新验证码
                 }
             });
         });
     });
+
+    function loadCaptcha() {
+        $.ajax({
+            url: "/captcha/generate", // 后端生成验证码的接口
+            type: "GET",
+            dataType: "json",
+            success: function(data) {
+                if (data.code === 0 && data.data) {
+                    // data.data 包含 captcha_id 和 captcha_image
+                    captchaId = data.data.captcha_id;
+                    $("#captcha_image").attr("src", "data:image/png;base64," + data.data.captcha_image);
+                    $("#captcha_code").val(""); // 清空验证码输入框
+                } else {
+                    showError("验证码加载失败: " + (data.message || "未知错误"));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("加载验证码失败:", error);
+                showError("无法连接到验证码服务");
+            }
+        });
+    }
 
     function showError(message) {
         $("#error_message").text(message).show();

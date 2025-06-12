@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"govote/app/model"
+	"govote/app/tools/auth"
 	"time"
 )
 
@@ -33,38 +34,33 @@ func InsertTestData() {
 func insertTestUsers() {
 	fmt.Println("插入测试用户...")
 
-	users := []model.User{
-		{
-			Name:        "admin",
-			Password:    "123456",
-			CreatedTime: time.Now(),
-			UpdatedTime: time.Now(),
-		},
-		{
-			Name:        "user1",
-			Password:    "123456",
-			CreatedTime: time.Now(),
-			UpdatedTime: time.Now(),
-		},
-		{
-			Name:        "user2",
-			Password:    "123456",
-			CreatedTime: time.Now(),
-			UpdatedTime: time.Now(),
-		},
-		{
-			Name:        "user3",
-			Password:    "123456",
-			CreatedTime: time.Now(),
-			UpdatedTime: time.Now(),
-		},
+	users := []struct {
+		Name     string
+		Password string
+	}{
+		{Name: "admin", Password: "123456"},
+		{Name: "user1", Password: "123456"},
+		{Name: "user2", Password: "123456"},
+		{Name: "user3", Password: "123456"},
 	}
 
-	for _, user := range users {
-		if err := model.Conn.Create(&user).Error; err != nil {
+	for _, u := range users {
+		// 检查用户是否已存在，避免重复插入导致错误
+		if existingUser, err := model.GetUser(u.Name); err == nil && existingUser.Id > 0 {
+			fmt.Printf("用户 %s 已存在 (ID: %d)，跳过插入\n", u.Name, existingUser.Id)
+			continue
+		}
+
+		newUser := model.User{
+			Name:        u.Name,
+			Password:    auth.EncryptV2(u.Password), // 对密码进行加密
+			CreatedTime: time.Now(),
+			UpdatedTime: time.Now(),
+		}
+		if err := model.Conn.Create(&newUser).Error; err != nil {
 			fmt.Printf("插入用户失败: %s\n", err.Error())
 		} else {
-			fmt.Printf("成功插入用户: %s (ID: %d)\n", user.Name, user.Id)
+			fmt.Printf("成功插入用户: %s (ID: %d)\n", newUser.Name, newUser.Id)
 		}
 	}
 }
@@ -134,6 +130,12 @@ func insertTestVotes() {
 	}
 
 	for _, vote := range votes {
+		// 检查投票是否已存在，避免重复插入导致错误
+		if existingVote := model.GetVote(vote.Id); existingVote.Vote.Id > 0 {
+			fmt.Printf("投票 \"%s\" (ID: %d) 已存在，跳过插入\n", vote.Title, vote.Id)
+			continue
+		}
+
 		if err := model.Conn.Create(&vote).Error; err != nil {
 			fmt.Printf("插入投票失败: %s\n", err.Error())
 		} else {
@@ -208,6 +210,12 @@ func insertTestVoteOptions() {
 		}
 
 		for _, option := range options {
+			// 检查选项是否已存在，避免重复插入导致错误
+			var existingOpt model.VoteOpt
+			if err := model.Conn.Where("name = ? AND vote_id = ?", option.Name, option.VoteId).First(&existingOpt).Error; err == nil && existingOpt.Id > 0 {
+				fmt.Printf("选项 \"%s\" (投票ID: %d) 已存在，跳过插入\n", option.Name, option.VoteId)
+				continue
+			}
 			if err := model.Conn.Create(&option).Error; err != nil {
 				fmt.Printf("插入投票选项失败: %s\n", err.Error())
 			} else {
@@ -261,6 +269,15 @@ func insertTestVoteRecords() {
 	}
 
 	for _, testVote := range testVotes {
+		// 检查投票记录是否已存在，避免重复插入导致错误
+		var existingRecord model.VoteOptUser
+		if err := model.Conn.Where("user_id = ? AND vote_id = ? AND vote_opt_id = ?",
+			testVote.userId, testVote.voteId, testVote.voteOptId).First(&existingRecord).Error; err == nil && existingRecord.Id > 0 {
+			fmt.Printf("投票记录已存在: 用户%d 投票给选项%d (投票%d)，跳过插入\n",
+				testVote.userId, testVote.voteOptId, testVote.voteId)
+			continue
+		}
+
 		// 检查选项是否属于指定的投票
 		var voteOpt model.VoteOpt
 		if err := model.Conn.Where("id = ? AND vote_id = ?", testVote.voteOptId, testVote.voteId).First(&voteOpt).Error; err != nil {
@@ -283,7 +300,7 @@ func insertTestVoteRecords() {
 				testVote.userId, testVote.voteOptId, testVote.voteId)
 		}
 
-		// 更新选项计数
+		// 更新选项计数 (注意：这里的计数更新应该在提交投票时由业务逻辑完成，这里只是为了测试数据完整性)
 		if err := model.Conn.Model(&model.VoteOpt{}).Where("id = ?", testVote.voteOptId).
 			Update("count", model.Conn.Raw("count + 1")).Error; err != nil {
 			fmt.Printf("更新选项计数失败: %s\n", err.Error())
