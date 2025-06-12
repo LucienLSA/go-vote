@@ -60,7 +60,7 @@ func DoVote(userId, voteId int64, optIDs []int64) bool {
 	return true
 }
 
-// DoVoteV2 匿名函数
+// DoVoteV1 匿名函数
 func DoVoteV1(userId, voteId int64, optIDs []int64) bool {
 	err := Conn.Transaction(func(tx *gorm.DB) error {
 		var ret Vote
@@ -89,4 +89,61 @@ func DoVoteV1(userId, voteId int64, optIDs []int64) bool {
 		return nil //如果返回nil 则直接commit
 	})
 	return err == nil
+}
+
+func AddVote(vote Vote, opt []VoteOpt) error {
+	err := Conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&vote).Error; err != nil {
+			return err
+		}
+		for _, voteOpt := range opt {
+			voteOpt.VoteId = vote.Id
+			if err := tx.Create(&voteOpt).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+func UpdateVote(vote Vote, opt []VoteOpt) error {
+	err := Conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&vote).Error; err != nil {
+			return err
+		}
+		for _, voteOpt := range opt {
+			if err := tx.Save(&voteOpt).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+func DelVote(id int64) bool {
+	if err := Conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&Vote{}, id).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		if err := tx.Where("vote_id = ?", id).Delete(&VoteOpt{}).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		if err := tx.Where("vote_id = ?", id).Delete(&VoteOptUser{}).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		fmt.Printf("err:%s", err.Error())
+		return false
+	}
+
+	return true
 }
