@@ -39,6 +39,17 @@ func DoVote(context *gin.Context) {
 
 	userID, _ := strconv.ParseInt(userIDStr, 10, 64)
 	voteId, _ := strconv.ParseInt(voteIdStr, 10, 64)
+
+	//查询是否投过票了
+	voteUser := model.GetVoteHistory(userID, voteId)
+	if len(voteUser) > 0 {
+		context.JSON(http.StatusOK, e.ECode{
+			Code:    10010,
+			Message: "您已投过票了",
+		})
+		return
+	}
+
 	opt := make([]int64, 0)
 	for _, v := range optStr {
 		optId, _ := strconv.ParseInt(v, 10, 64)

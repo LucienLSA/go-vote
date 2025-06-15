@@ -2,6 +2,7 @@ package router
 
 import (
 	"govote/app/logic"
+	"govote/app/tools/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,6 +47,6 @@ func New() {
 		r.POST("/captcha/verify", logic.VerifyCaptchaHandler)
 	}
 	if err := r.Run(":8080"); err != nil {
-		panic("gin 启动失败！")
+		logger.L.Panic("gin 启动失败！")
 	}
 }

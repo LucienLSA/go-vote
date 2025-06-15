@@ -213,10 +213,11 @@
             type: "GET",
             dataType: "json",
             success: function(data) {
+                console.log("验证码加载响应:", data);
                 if (data.code === 0 && data.data) {
                     // data.data 包含 captcha_id 和 captcha_image
                     captchaId = data.data.captcha_id;
-                    $("#captcha_image").attr("src", "data:image/png;base64," + data.data.captcha_image);
+                    $("#captcha_image").attr("src", data.data.captcha_image);
                     $("#captcha_code").val(""); // 清空验证码输入框
                 } else {
                     showError("验证码加载失败: " + (data.message || "未知错误"));
