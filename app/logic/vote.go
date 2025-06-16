@@ -38,7 +38,29 @@ func AddVote(context *gin.Context) {
 }
 
 func UpdateVote(context *gin.Context) {
+	idStr := context.Query("title")
+	optStr, _ := context.GetPostFormArray("opt_name[]")
+	//构建结构体
+	vote := model.Vote{
+		Title:       idStr,
+		Type:        0,
+		Status:      0,
+		CreatedTime: time.Now(),
+	}
 
+	opt := make([]model.VoteOpt, 0)
+	for _, v := range optStr {
+		opt = append(opt, model.VoteOpt{
+			Name:        v,
+			CreatedTime: time.Now(),
+		})
+	}
+	if err := model.UpdateVote(vote, opt); err != nil {
+		context.JSON(http.StatusOK, e.ServerErr)
+		return
+	}
+
+	context.JSON(http.StatusOK, e.OK)
 }
 
 // DelVote 删除一个投票

@@ -56,7 +56,7 @@ func CreateUser(context *gin.Context) {
 	}
 
 	//这里有一个巨大的BUG，并发安全！
-	if oldUser, _ := model.GetUserV1(user.Name); oldUser.Id > 0 {
+	if oldUser, _ := model.GetUser(user.Name); oldUser.Id > 0 {
 		context.JSON(http.StatusOK, e.UserExistsErr)
 		return
 	}

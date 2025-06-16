@@ -53,7 +53,7 @@ func DoVote(context *gin.Context) {
 		opt = append(opt, optId)
 	}
 
-	model.DoVoteV1(userID, voteId, opt)
+	model.DoVoteV2(userID, voteId, opt)
 	context.JSON(http.StatusOK, e.ECode{
 		Code:    0,
 		Message: "投票成功",
