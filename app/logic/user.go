@@ -5,6 +5,7 @@ import (
 	"govote/app/model"
 	"govote/app/tools/auth"
 	"govote/app/tools/e"
+	"govote/app/tools/uid"
 	"net/http"
 	"time"
 
@@ -61,6 +62,7 @@ func CreateUser(context *gin.Context) {
 	}
 
 	newUser := model.User{
+		Uuid:        uid.GetUUID(),
 		Name:        user.Name,
 		Password:    auth.EncryptV2(user.Password),
 		CreatedTime: time.Now(),

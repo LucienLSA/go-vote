@@ -44,6 +44,7 @@ func (v *Vote) TableName() string {
 
 type User struct {
 	Id          int64     `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
+	Uuid        string    `gorm:"column:uuid;default:NULL"`
 	Name        string    `gorm:"column:name;default:NULL"`
 	Password    string    `gorm:"column:password;default:NULL"`
 	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
