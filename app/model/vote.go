@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"govote/app/tools/log"
 	"time"
 
@@ -148,11 +147,13 @@ func GetVoteHistory(userId, voteId int64) []VoteOptUser {
 func AddVote(vote Vote, opt []VoteOpt) error {
 	err := Conn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&vote).Error; err != nil {
+			log.L.Errorf("新增投票记录失败, err:%s\n", err)
 			return err
 		}
 		for _, voteOpt := range opt {
 			voteOpt.VoteId = vote.Id
 			if err := tx.Create(&voteOpt).Error; err != nil {
+				log.L.Errorf("新增投票记录失败, err:%s\n", err)
 				return err
 			}
 		}
@@ -164,10 +165,12 @@ func AddVote(vote Vote, opt []VoteOpt) error {
 func UpdateVote(vote Vote, opt []VoteOpt) error {
 	err := Conn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&vote).Error; err != nil {
+			log.L.Errorf("更新投票记录失败, err:%s\n", err)
 			return err
 		}
 		for _, voteOpt := range opt {
 			if err := tx.Save(&voteOpt).Error; err != nil {
+				log.L.Errorf("更新投票记录失败, err:%s\n", err)
 				return err
 			}
 		}
@@ -179,26 +182,24 @@ func UpdateVote(vote Vote, opt []VoteOpt) error {
 func DelVote(id int64) bool {
 	if err := Conn.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&Vote{}, id).Error; err != nil {
-			fmt.Printf("err:%s", err.Error())
+			log.L.Errorf("删除投票记录失败, err:%s\n", err)
 			return err
 		}
 
 		if err := tx.Where("vote_id = ?", id).Delete(&VoteOpt{}).Error; err != nil {
-			fmt.Printf("err:%s", err.Error())
+			log.L.Errorf("删除投票记录失败, err:%s\n", err)
 			return err
 		}
 
 		if err := tx.Where("vote_id = ?", id).Delete(&VoteOptUser{}).Error; err != nil {
-			fmt.Printf("err:%s", err.Error())
+			log.L.Errorf("删除投票记录失败, err:%s\n", err)
 			return err
 		}
-
 		return nil
 	}); err != nil {
-		fmt.Printf("err:%s", err.Error())
+		log.L.Errorf("删除投票记录事务失败, err:%s\n", err)
 		return false
 	}
-
 	return true
 }
 
@@ -214,7 +215,10 @@ func EndVote() {
 	for _, vote := range votes {
 		if vote.Time+vote.CreatedTime.Unix() <= now {
 			// 过期将其对应的记录状态改为9
-			Conn.Table("vote").Where("id = ?", vote.Id).Update("status", 0)
+			if err := Conn.Table("vote").Where("id = ?", vote.Id).Update("status", 0).Error; err != nil {
+				log.L.Errorf("查询投票记录失败, err:%s\n", err)
+				return
+			}
 		}
 	}
 }
