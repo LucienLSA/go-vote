@@ -26,6 +26,15 @@ type CUser struct {
 	CaptchaCode string `json:"captcha_code" form:"captcha_code"`
 }
 
+// CreateUser godoc
+// @Summary      用户注册
+// @Description  用户注册
+// @Tags         register
+// @Accept       json
+// @Produce      json
+// @Param        name   body      CUser true	"register User"
+// @Success      200  {object}  e.ECode
+// @Router       /user/create [post]
 func CreateUser(context *gin.Context) {
 	var user CUser
 	if err := context.ShouldBind(&user); err != nil {

@@ -1,0 +1,116 @@
+definitions:
+  e.ECode:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  logic.User:
+    properties:
+      captcha_code:
+        type: string
+      captcha_id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+info:
+  contact:
+    email: lucien@qq.com
+    name: Vote API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /login:
+    get:
+      consumes:
+      - application/json
+      description: 用户登出
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e.ECode'
+      summary: 用户登出
+      tags:
+      - login
+    post:
+      consumes:
+      - application/json
+      description: 用户登录
+      parameters:
+      - description: login User
+        in: body
+        name: name
+        required: true
+        schema:
+          $ref: '#/definitions/logic.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e.ECode'
+      summary: 用户登录
+      tags:
+      - login
+  /vote:
+    get:
+      consumes:
+      - application/json
+      description: 获取投票信息
+      parameters:
+      - description: vote Id
+        in: query
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e.ECode'
+      summary: 获取投票信息
+      tags:
+      - vote
+    post:
+      consumes:
+      - application/json
+      description: 投票
+      parameters:
+      - description: user Id
+        in: query
+        name: Id
+        required: true
+        type: integer
+      - description: vote Id
+        in: query
+        name: vote_id
+        required: true
+        type: integer
+      - description: vote_opt
+        in: query
+        name: opt[]
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/e.ECode'
+      summary: 投票
+      tags:
+      - vote
+swagger: "2.0"

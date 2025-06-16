@@ -32,7 +32,7 @@ func NewLogger() {
 	L.SetLevel(logrus.DebugLevel)
 	// 将日志输出到控制台和文件中
 	w1 := os.Stdout
-	w2, _ := os.OpenFile("./vote.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	w2, _ := os.OpenFile("./tmp/log/vote.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	L.SetOutput(io.MultiWriter(w1, w2))
 	// L.AddHook()
 }

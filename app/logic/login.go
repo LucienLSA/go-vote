@@ -21,6 +21,15 @@ func GetLogin(context *gin.Context) {
 	context.HTML(http.StatusOK, "login.html", nil)
 }
 
+// DoLogin godoc
+// @Summary      用户登录
+// @Description  用户登录
+// @Tags         login
+// @Accept       json
+// @Produce      json
+// @Param        name   body      User true	"login User"
+// @Success      200  {object}  e.ECode
+// @Router       /login [post]
 func DoLogin(context *gin.Context) {
 	var user User
 	if err := context.ShouldBind(&user); err != nil {
@@ -72,12 +81,20 @@ func CheckUser(context *gin.Context) {
 		id = v.(int64)
 	}
 	if name == "" || id < 0 {
-		context.JSON(http.StatusOK, e.NotLogin)
+		context.JSON(http.StatusUnauthorized, e.NotLogin)
 		context.Abort()
 	}
 	context.Next()
 }
 
+// Logout godoc
+// @Summary      用户登出
+// @Description  用户登出
+// @Tags         login
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  e.ECode
+// @Router       /login [get]
 func Logout(context *gin.Context) {
 	session.FlushSession(context)
 	context.Redirect(http.StatusFound, "/login")

@@ -54,6 +54,14 @@ func GetVoteV1(id int64) VoteWithOpt {
 	}
 }
 
+func GetVoteByName(name string) *Vote {
+	var ret Vote
+	if err := Conn.Raw(`select * from vote where title = ?`, name).Scan(&ret).Error; err != nil {
+		log.L.Errorf("查询投票记录失败, err:%s\n", err)
+	}
+	return &ret
+}
+
 func DoVote(userId, voteId int64, optIDs []int64) bool {
 	tx := Conn.Begin()
 	var ret Vote

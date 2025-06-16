@@ -21,17 +21,40 @@ func GetVotes(context *gin.Context) {
 	})
 }
 
+// GetVoteInfo godoc
+// @Summary      获取投票信息
+// @Description  获取投票信息
+// @Tags         vote
+// @Accept       json
+// @Produce      json
+// @Param 		 id    query    int   true  "vote Id"
+// @Success      200  {object}  e.ECode
+// @Router       /vote [get]
 func GetVoteInfo(context *gin.Context) {
 	var id int64
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
 	ret := model.GetVote(id)
 	// context.HTML(http.StatusOK, "vote.html", gin.H{"vote": ret})
+	if ret.Vote.Id < 1 {
+		context.JSON(http.StatusNotFound, e.NotFoundErr)
+	}
 	context.JSON(http.StatusOK, e.ECode{
 		Data: ret,
 	})
 }
 
+// DoVote godoc
+// @Summary      投票
+// @Description  投票
+// @Tags         vote
+// @Accept       json
+// @Produce      json
+// @Param 		 Id    query    int   true  "user Id"
+// @Param 		 vote_id    query    int   true  "vote Id"
+// @Param 		 opt[]    query    int   true  "vote_opt"
+// @Success      200  {object}  e.ECode
+// @Router       /vote [post]
 func DoVote(context *gin.Context) {
 	userIDStr, _ := context.Cookie("Id")
 	voteIdStr, _ := context.GetPostForm("vote_id")

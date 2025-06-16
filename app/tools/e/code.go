@@ -12,6 +12,7 @@ var (
 	VoteRepeatErr = ECode{Code: 10005, Message: "投票重复"}
 	PasswordErr   = ECode{Code: 10006, Message: "密码不一致"}
 	UserExistsErr = ECode{Code: 10007, Message: "用户名已存在"}
+	NotFoundErr   = ECode{Code: 10008, Message: "资源不存在"}
 )
 
 type ECode struct {

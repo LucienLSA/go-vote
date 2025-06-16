@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GenerateCaptcha 生成验证码
 func GenerateCaptcha(context *gin.Context) {
 	captchaData, err := captcha.CaptchaGenerate()
 	if err != nil {
