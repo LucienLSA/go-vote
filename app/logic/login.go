@@ -44,7 +44,7 @@ func DoLogin(context *gin.Context) {
 		return
 	}
 
-	ret, err := model.GetUser(user.Name)
+	ret, err := model.GetUserV1(user.Name)
 	if err != nil {
 		// 用户不存在或获取失败
 		context.JSON(http.StatusOK, e.UserErr)

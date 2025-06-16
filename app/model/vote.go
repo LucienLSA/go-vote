@@ -202,6 +202,33 @@ func DelVote(id int64) bool {
 	return true
 }
 
+// 改造为原生SQL
+func DelVoteV1(id int64) bool {
+	if err := Conn.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(`delete from vote where id = ? limit 1`, id).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		if err := tx.Where("vote_id = ?", id).Delete(&VoteOpt{}).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		if err := tx.Where("vote_id = ?", id).Delete(&VoteOptUser{}).Error; err != nil {
+			fmt.Printf("err:%s", err.Error())
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		fmt.Printf("err:%s", err.Error())
+		return false
+	}
+
+	return true
+}
+
 func EndVote() {
 	votes := make([]Vote, 0)
 	// 查询当前投票记录的状态为1的记录
@@ -213,8 +240,34 @@ func EndVote() {
 	now := time.Now().Unix()
 	for _, vote := range votes {
 		if vote.Time+vote.CreatedTime.Unix() <= now {
+			// 过期将其对应的记录状态改为0
+			err := Conn.Table("vote").Where("id = ?", vote.Id).Update("status", 0).Error
+			if err != nil {
+				log.L.Errorf("更新投票状态失败, err:%s\n", err)
+				return
+			}
+		}
+	}
+}
+
+func EndVoteV1() {
+	votes := make([]Vote, 0)
+	// 查询当前投票记录的状态为1的记录
+	err := Conn.Raw(`select * from vote where status = ?`, 1).Scan(&votes).Error
+	if err != nil {
+		log.L.Errorf("查询投票记录失败, err:%s\n", err)
+		return
+	}
+	// 判断其是否过期
+	now := time.Now().Unix()
+	for _, vote := range votes {
+		if vote.Time+vote.CreatedTime.Unix() <= now {
 			// 过期将其对应的记录状态改为9
-			Conn.Table("vote").Where("id = ?", vote.Id).Update("status", 0)
+			err := Conn.Exec(`update vote set status = 0 where id = ? limit 1`, vote.Id).Error
+			if err != nil {
+				log.L.Errorf("更新投票状态失败, err:%s\n", err)
+				return
+			}
 		}
 	}
 }
