@@ -2,6 +2,7 @@ package captcha
 
 import (
 	"fmt"
+	"govote/app/tools/log"
 
 	"github.com/mojocn/base64Captcha"
 )
@@ -36,12 +37,12 @@ var store = base64Captcha.DefaultMemStore
 
 func CaptchaGenerate() (CaptchaData, error) {
 	var ret CaptchaData
-
 	//注意，这里直接使用digitDriver 会报错。必须传一个指针。原因参考接口实现课程中的内容
 	c := base64Captcha.NewCaptcha(&digitDriver, store)
 	id, b64s, res, err := c.Generate()
 	fmt.Println("验证码答案:", res) // 调试用，生产环境应该移除
 	if err != nil {
+		log.L.Errorf("数据表AutoMigrate失败, err:%s\n", err)
 		return ret, err
 	}
 

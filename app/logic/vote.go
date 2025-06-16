@@ -30,10 +30,7 @@ func AddVote(context *gin.Context) {
 	}
 
 	if err := model.AddVote(vote, opt); err != nil {
-		context.JSON(http.StatusOK, e.ECode{
-			Code:    10006,
-			Message: err.Error(),
-		})
+		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 
@@ -50,9 +47,7 @@ func DelVote(context *gin.Context) {
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
 	if ok := model.DelVote(id); !ok {
-		context.JSON(http.StatusOK, e.ECode{
-			Code: 10006,
-		})
+		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 

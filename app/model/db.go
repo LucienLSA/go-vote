@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 
+	"govote/app/tools/log"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -15,8 +17,7 @@ var Conn *gorm.DB
 
 func NewMysql() {
 	my := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", "root", "123456", "localhost:3306", "vote")
-	var ormLogger logger.Interface
-	ormLogger = logger.Default.LogMode(logger.Info)
+	ormLogger := logger.Default.LogMode(logger.Info)
 	conn, err := gorm.Open(mysql.Open(my), &gorm.Config{
 		Logger: ormLogger,
 		NamingStrategy: schema.NamingStrategy{
@@ -24,12 +25,11 @@ func NewMysql() {
 		},
 	})
 	if err != nil {
-		fmt.Printf("err:%s\n", err)
-		panic(err)
+		log.L.Panicf("数据库变量初始化失败, err:%s\n", err)
 	}
 	err = conn.AutoMigrate(&Vote{}, &User{}, &VoteOpt{}, &VoteOptUser{})
 	if err != nil {
-		return
+		log.L.Panicf("数据表AutoMigrate失败, err:%s\n", err)
 	}
 	Conn = conn
 }

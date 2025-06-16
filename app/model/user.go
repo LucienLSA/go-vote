@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"govote/app/tools/log"
 
 	"gorm.io/gorm"
 )
@@ -11,9 +11,10 @@ func GetUser(name string) (User, error) {
 	err := Conn.Table("user").Where("name = ?", name).First(&ret).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return ret, fmt.Errorf("用户不存在")
+			log.L.Errorf("gorm.ErrRecordNotFound,err:%s\n", err)
+			return ret, err
 		}
-		fmt.Printf("查询用户失败: %s", err.Error())
+		log.L.Errorf("查询用户失败, err:%s\n", err)
 		return ret, err
 	}
 	return ret, nil
@@ -21,5 +22,10 @@ func GetUser(name string) (User, error) {
 
 // CreateUser 参数是指针
 func CreateUser(user *User) error {
-	return Conn.Create(user).Error
+	err := Conn.Create(user).Error
+	if err != nil {
+		log.L.Errorf("创建用户失败, err:%s\n", err)
+		return err
+	}
+	return nil
 }

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>投票项目 - 用户注册</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .main {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 350px;
+        }
+        .main h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .captcha-container input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .captcha-container img {
+            height: 40px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .password-requirements {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<main class="main">
+    <h2>用户注册</h2>
+    <input type="text" name="name" id="name" placeholder="请输入用户名">
+    <input type="password" name="password" id="password" placeholder="请输入密码">
+    <!-- <div class="password-requirements">密码长度建议8-16位，不能为纯数字</div> -->
+    <input type="password" name="password_2" id="password_2" placeholder="请再次输入密码">
+    <div class="captcha-container">
+        <input type="text" id="captcha_code" placeholder="请输入验证码">
+        <img id="captcha_image" src="" alt="验证码" title="点击刷新">
+    </div>
+    <button type="submit" id="register_sub">注册</button>
+    <div id="error_message" class="error-message"></div>
+    <div id="success_message" class="success-message"></div>
+    <div class="login-link">
+        <a href="/login">已有账号？立即登录</a>
+    </div>
+</main>
+
+<script>
+    var captchaId = ""; // 用于存储验证码ID
+
+    $(document).ready(function(){
+        // 加载验证码
+        loadCaptcha();
+
+        // 点击验证码图片刷新
+        $("#captcha_image").on("click", function() {
+            loadCaptcha();
+        });
+
+        // 回车键注册
+        $("#captcha_code").on("keypress", function(e) {
+            if(e.which == 13) {
+                $("#register_sub").click();
+            }
+        });
+        $("#password_2").on("keypress", function(e) {
+            if(e.which == 13) {
+                $("#register_sub").click();
+            }
+        });
+        $("#password").on("keypress", function(e) {
+            if(e.which == 13) {
+                $("#register_sub").click();
+            }
+        });
+
+        $("#register_sub").on("click", function() {
+            // 获取输入值
+            var name = $("#name").val().trim();
+            var password = $("#password").val().trim();
+            var password2 = $("#password_2").val().trim();
+            var captchaCode = $("#captcha_code").val().trim();
+            
+            // 验证输入
+            if (!name) {
+                showError("请输入用户名");
+                return;
+            }
+            if (!password) {
+                showError("请输入密码");
+                return;
+            }
+            if (!password2) {
+                showError("请再次输入密码");
+                return;
+            }
+            if (password !== password2) {
+                showError("两次输入的密码不一致");
+                return;
+            }
+            if (!captchaCode) {
+                showError("请输入验证码");
+                return;
+            }
+
+            // 禁用按钮，显示加载状态
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('注册中...');
+            
+            // 清除之前的消息
+            hideMessages();
+
+            $.ajax({
+                url: "/user/create",
+                data: {
+                    name: name,
+                    password: password,
+                    password_2: password2,
+                    captcha_id: captchaId,
+                    captcha_code: captchaCode
+                },
+                type: "post",
+                dataType: "json",
+                success: function(data) {
+                    console.log("注册响应:", data);
+                    
+                    if (data.code === 0) {
+                        // 注册成功
+                        showSuccess("注册成功，正在跳转到登录页面...");
+                        setTimeout(function() {
+                            window.location.href = "/login";
+                        }, 2000);
+                    } else {
+                        // 注册失败
+                        var errorMsg = data.message || "注册失败，请重试";
+                        showError(errorMsg);
+                        $btn.prop('disabled', false).text('注册');
+                        loadCaptcha(); // 刷新验证码
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("注册请求失败:", error);
+                    showError("网络错误，请重试");
+                    $btn.prop('disabled', false).text('注册');
+                    loadCaptcha(); // 刷新验证码
+                }
+            });
+        });
+    });
+
+    function loadCaptcha() {
+        $.ajax({
+            url: "/captcha/generate",
+            type: "GET",
+            dataType: "json",
+            success: function(data) {
+                console.log("验证码加载响应:", data);
+                if (data.code === 0 && data.data) {
+                    captchaId = data.data.captcha_id;
+                    $("#captcha_image").attr("src", data.data.captcha_image);
+                    $("#captcha_code").val(""); // 清空验证码输入框
+                } else {
+                    showError("验证码加载失败: " + (data.message || "未知错误"));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("加载验证码失败:", error);
+                showError("无法连接到验证码服务");
+            }
+        });
+    }
+
+    function showError(message) {
+        $("#error_message").text(message).show();
+        $("#success_message").hide();
+    }
+
+    function showSuccess(message) {
+        $("#success_message").text(message).show();
+        $("#error_message").hide();
+    }
+
+    function hideMessages() {
+        $("#error_message").hide();
+        $("#success_message").hide();
+    }
+</script>
+</body>
+</html> 

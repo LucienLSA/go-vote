@@ -36,11 +36,11 @@ func DoLogin(context *gin.Context) {
 
 	// 验证码校验
 	if user.CaptchaId == "" || user.CaptchaCode == "" {
-		context.JSON(http.StatusOK, e.ECode{Code: 1, Message: "验证码ID或验证码不能为空"})
+		context.JSON(http.StatusOK, e.CaptchaErr)
 		return
 	}
 	if !VerifyCaptcha(user.CaptchaId, user.CaptchaCode) {
-		context.JSON(http.StatusOK, e.ECode{Code: 1, Message: "验证码错误"})
+		context.JSON(http.StatusOK, e.CaptchaErr)
 		return
 	}
 

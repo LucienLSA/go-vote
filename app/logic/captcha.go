@@ -12,16 +12,13 @@ import (
 func GenerateCaptcha(context *gin.Context) {
 	captchaData, err := captcha.CaptchaGenerate()
 	if err != nil {
-		context.JSON(http.StatusOK, e.ECode{
-			Code:    1,
-			Message: "生成验证码失败",
-		})
+		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 
 	context.JSON(http.StatusOK, e.ECode{
 		Code:    0,
-		Message: "",
+		Message: "验证码生成成功",
 		Data: gin.H{
 			"captcha_id":    captchaData.CaptchaId,
 			"captcha_image": captchaData.Data,
@@ -50,6 +47,6 @@ func VerifyCaptchaHandler(context *gin.Context) {
 	if VerifyCaptcha(captchaReq.CaptchaId, captchaReq.Answer) {
 		context.JSON(http.StatusOK, e.OK)
 	} else {
-		context.JSON(http.StatusOK, e.ECode{Code: 1, Message: "验证码错误"})
+		context.JSON(http.StatusOK, e.CaptchaErr)
 	}
 }

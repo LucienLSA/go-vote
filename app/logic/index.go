@@ -43,10 +43,7 @@ func DoVote(context *gin.Context) {
 	//查询是否投过票了
 	voteUser := model.GetVoteHistory(userID, voteId)
 	if len(voteUser) > 0 {
-		context.JSON(http.StatusOK, e.ECode{
-			Code:    10010,
-			Message: "您已投过票了",
-		})
+		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
 	}
 
@@ -58,6 +55,7 @@ func DoVote(context *gin.Context) {
 
 	model.DoVoteV1(userID, voteId, opt)
 	context.JSON(http.StatusOK, e.ECode{
-		Message: "投票完成",
+		Code:    0,
+		Message: "投票成功",
 	})
 }
