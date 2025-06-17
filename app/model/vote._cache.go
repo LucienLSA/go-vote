@@ -20,15 +20,18 @@ func GetVoteCache(c context.Context, id int64) VoteWithOpt {
 		_ = json.Unmarshal([]byte(voteStr), &ret)
 		return ret
 	}
-	vote := GetVote(id)
+	vote, err := GetVoteV5(id)
+	if err != nil {
+		log.L.Errorf("获取投票记录详情失败, err:%s\n", err.Error())
+	}
 	if vote.Vote.Id > 0 {
 		//写入缓存
-		s, _ := json.Marshal(vote)
+		s, _ := json.Marshal(&vote)
 		err1 := Rdb.Set(c, key, s, 3600*time.Second).Err()
 		if err1 != nil {
 			log.L.Errorf("写入缓存失败, err:%s\n", err1.Error())
 		}
-		ret = vote
+		ret = *vote
 	}
 	return ret
 }

@@ -22,6 +22,22 @@ func TestGetVote(t *testing.T) {
 	Close()
 }
 
+func TestGetVoteV1(t *testing.T) {
+	NewMysql()
+	//测试用例
+	r, _ := GetVoteV5(1)
+	fmt.Printf("ret:%+v", r)
+	Close()
+}
+
+// func TestGetVoteV2(t *testing.T) {
+// 	NewMysql()
+// 	//测试用例
+// 	r, _ := GetVoteV2(1)
+// 	fmt.Printf("ret:%+v", r.Opt)
+// 	Close()
+// }
+
 func TestDoVote(t *testing.T) {
 	NewMysql()
 	//测试用例

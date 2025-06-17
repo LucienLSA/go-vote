@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"govote/app/tools/log"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -52,6 +54,95 @@ func GetVoteV1(id int64) VoteWithOpt {
 		Vote: ret,
 		Opt:  opt,
 	}
+}
+
+// 预加载模式
+func GetVoteV2(id int64) (*Vote, error) {
+	var ret Vote
+	err := Conn.Preload("Opt").Table("vote").Where("id = ?", id).First(&ret).Error
+	if err != nil {
+		log.L.Errorf("查询投票记录失败, err:%s\n", err)
+		return &ret, err
+	}
+	return &ret, nil
+}
+
+// JOIN
+func GetVoteV3(id int64) (*VoteWithOpt, error) {
+	var ret VoteWithOpt
+	sql := `select vote.*,vote_opt.id as vid, vote_opt.name,vote_opt.count from vote join vote_opt on vote.id = vote_opt.vote_id where vote.id = ?`
+	row, err := Conn.Raw(sql, id).Rows()
+	if err != nil {
+		log.L.Errorf("查询投票记录失败, err:%s\n", err)
+		return nil, err
+	}
+	for row.Next() {
+		temp := make(map[string]any)
+		_ = Conn.ScanRows(row, &temp)
+		fmt.Printf("temp:%+v\n", temp)
+		if v, ok := temp["id"]; ok {
+			ret.Vote.Id = v.(int64)
+		}
+	}
+
+	return &ret, nil
+}
+
+// 协程 并发
+func GetVoteV4(id int64) (*VoteWithOpt, error) {
+	var ret Vote
+	ch := make(chan struct{}, 2)
+	go func() {
+		if err := Conn.Table("vote").Where("id = ?", id).First(&ret).Error; err != nil {
+			log.L.Errorf("查询投票记录失败, err:%s\n", err)
+		}
+		ch <- struct{}{}
+	}()
+
+	opt := make([]VoteOpt, 0)
+	go func() {
+		if err := Conn.Table("vote_opt").Where("vote_id = ?", id).Find(&opt).Error; err != nil {
+			log.L.Errorf("查询投票选项失败, err:%s\n", err)
+		}
+		ch <- struct{}{}
+	}()
+	var cnt int
+	for _ = range ch {
+		cnt++
+		if cnt >= 2 {
+			break
+		}
+	}
+	return &VoteWithOpt{
+		Vote: ret,
+		Opt:  opt,
+	}, nil
+}
+
+// waitGroup
+func GetVoteV5(id int64) (*VoteWithOpt, error) {
+	var ret Vote
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := Conn.Table("vote").Where("id = ?", id).First(&ret).Error; err != nil {
+			log.L.Errorf("查询投票记录失败, err:%s\n", err)
+		}
+	}()
+	opt := make([]VoteOpt, 0)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := Conn.Table("vote_opt").Where("vote_id = ?", id).Find(&opt).Error; err != nil {
+			log.L.Errorf("查询投票选项失败, err:%s\n", err)
+		}
+	}()
+	wg.Wait()
+	return &VoteWithOpt{
+		Vote: ret,
+		Opt:  opt,
+	}, nil
 }
 
 func GetVoteByName(name string) *Vote {
