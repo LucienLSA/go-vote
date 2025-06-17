@@ -4,12 +4,17 @@ import (
 	"govote/app/param"
 	"govote/app/tools/captcha"
 	"govote/app/tools/e"
+	"govote/app/tools/limit"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GenerateCaptcha(context *gin.Context) {
+	if !limit.CheckXYZ(context) {
+		context.JSON(http.StatusOK, e.LimitErr)
+		return
+	}
 	captchaData, err := captcha.CaptchaGenerate()
 	if err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)

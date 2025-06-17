@@ -1,0 +1,4 @@
+time="2025-06-17T18:26:08+08:00" level=info msg="日志初始化成功!"
+time="2025-06-17T18:26:08+08:00" level=info msg="MySQL初始化成功!"
+time="2025-06-17T18:26:08+08:00" level=info msg="Redis初始化成功!"
+time="2025-06-17T18:26:09+08:00" level=info msg="ip:127.0.0.1\n ua:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0\n"
