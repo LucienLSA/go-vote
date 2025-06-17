@@ -30,7 +30,8 @@ func ResultVote(context *gin.Context) {
 	var id int64
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
-	ret := model.GetVote(id)
+	// ret := model.GetVote(id)
+	ret := model.GetVoteCache(context, id)
 	data := ResultData{
 		Title: ret.Vote.Title,
 	}

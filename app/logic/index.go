@@ -2,7 +2,9 @@ package logic
 
 import (
 	"govote/app/model"
+	"govote/app/param"
 	"govote/app/tools/e"
+	"govote/app/tools/session"
 	"net/http"
 	"strconv"
 
@@ -27,15 +29,15 @@ func GetVotes(context *gin.Context) {
 // @Tags         vote
 // @Accept       json
 // @Produce      json
-// @Param 		 id    query    int   true  "vote Id"
+// @Param 		 id    body    param.VoteData   true  "vote param.VoteData"
 // @Success      200  {object}  e.ECode
 // @Router       /vote [get]
 func GetVoteInfo(context *gin.Context) {
-	var id int64
+	var voteData param.VoteData
 	idStr := context.Query("id")
-	id, _ = strconv.ParseInt(idStr, 10, 64)
-	ret := model.GetVote(id)
-	// context.HTML(http.StatusOK, "vote.html", gin.H{"vote": ret})
+	voteData.Id, _ = strconv.ParseInt(idStr, 10, 64)
+	// ret := model.GetVote(voteData.Id)
+	ret := model.GetVoteCache(context, voteData.Id)
 	if ret.Vote.Id < 1 {
 		context.JSON(http.StatusNotFound, e.NotFoundErr)
 	}
@@ -50,33 +52,48 @@ func GetVoteInfo(context *gin.Context) {
 // @Tags         vote
 // @Accept       json
 // @Produce      json
-// @Param 		 Id    query    int   true  "user Id"
-// @Param 		 vote_id    query    int   true  "vote Id"
-// @Param 		 opt[]    query    int   true  "vote_opt"
+// @Param 		 Id    body     param.VoteInfoData   true  "user  param.VoteInfoData"
 // @Success      200  {object}  e.ECode
 // @Router       /vote [post]
 func DoVote(context *gin.Context) {
-	userIDStr, _ := context.Cookie("Id")
+	var voteInfo param.VoteInfoData
+	// 使用session机制获取用户ID
+	values := session.GetSession(context)
+	var userID int64
+	if v, ok := values["id"]; ok {
+		userID = v.(int64)
+	}
 	voteIdStr, _ := context.GetPostForm("vote_id")
 	optStr, _ := context.GetPostFormArray("opt[]")
 
-	userID, _ := strconv.ParseInt(userIDStr, 10, 64)
-	voteId, _ := strconv.ParseInt(voteIdStr, 10, 64)
+	voteInfo.UserID = userID
+	voteInfo.VoteID, _ = strconv.ParseInt(voteIdStr, 10, 64)
 
 	//查询是否投过票了
-	voteUser := model.GetVoteHistory(userID, voteId)
+	voteUser := model.GetVoteHistory(voteInfo.UserID, voteInfo.VoteID)
 	if len(voteUser) > 0 {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
 	}
 
-	opt := make([]int64, 0)
+	voteInfo.Opt = make([]int64, 0)
 	for _, v := range optStr {
 		optId, _ := strconv.ParseInt(v, 10, 64)
-		opt = append(opt, optId)
+		voteInfo.Opt = append(voteInfo.Opt, optId)
+	}
+	// 执行投票
+	ok := model.DoVoteV2(voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
+	if !ok {
+		context.JSON(http.StatusOK, e.ServerErr)
+		return
+	}
+	// 投票完成删除缓存，设置为过期
+	err := model.CleanVote(context, voteInfo.UserID)
+	if err != nil {
+		context.JSON(http.StatusOK, e.ServerErr)
+		return
 	}
 
-	model.DoVoteV2(userID, voteId, opt)
 	context.JSON(http.StatusOK, e.ECode{
 		Code:    0,
 		Message: "投票成功",

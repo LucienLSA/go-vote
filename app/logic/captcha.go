@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"govote/app/param"
 	"govote/app/tools/captcha"
 	"govote/app/tools/e"
 	"net/http"
@@ -27,7 +28,7 @@ func GenerateCaptcha(context *gin.Context) {
 
 // VerifyCaptcha 验证验证码
 func VerifyCaptcha(id, code string) bool {
-	data := captcha.CaptchaData{
+	data := param.CaptchaData{
 		CaptchaId: id,
 		Answer:    code,
 	}
@@ -36,7 +37,7 @@ func VerifyCaptcha(id, code string) bool {
 
 // VerifyCaptchaHandler handles captcha verification
 func VerifyCaptchaHandler(context *gin.Context) {
-	var captchaReq captcha.CaptchaData
+	var captchaReq param.CaptchaData
 	if err := context.ShouldBind(&captchaReq); err != nil {
 		context.JSON(http.StatusBadRequest, e.ParamErr)
 		return

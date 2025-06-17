@@ -2,16 +2,11 @@ package captcha
 
 import (
 	"fmt"
+	"govote/app/param"
 	"govote/app/tools/log"
 
 	"github.com/mojocn/base64Captcha"
 )
-
-type CaptchaData struct {
-	CaptchaId string `json:"captcha_id" form:"captcha_id"`
-	Data      string `json:"data" form:"data"`     // base64 图片数据
-	Answer    string `json:"answer" form:"answer"` // 验证码答案
-}
 
 type driverString struct {
 	Id            string
@@ -35,8 +30,8 @@ var digitDriver = base64Captcha.DriverDigit{
 // 使用内存驱动，相关数据会存在内存空间里
 var store = base64Captcha.DefaultMemStore
 
-func CaptchaGenerate() (CaptchaData, error) {
-	var ret CaptchaData
+func CaptchaGenerate() (param.CaptchaData, error) {
+	var ret param.CaptchaData
 	//注意，这里直接使用digitDriver 会报错。必须传一个指针。原因参考接口实现课程中的内容
 	c := base64Captcha.NewCaptcha(&digitDriver, store)
 	id, b64s, res, err := c.Generate()
@@ -52,7 +47,7 @@ func CaptchaGenerate() (CaptchaData, error) {
 	return ret, nil
 }
 
-func CaptchaVerify(data CaptchaData) bool {
+func CaptchaVerify(data param.CaptchaData) bool {
 	// 直接使用 store.Verify 验证，传入验证码ID和用户输入的答案
 	return store.Verify(data.CaptchaId, data.Answer, true)
 }

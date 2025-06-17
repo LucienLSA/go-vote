@@ -10,6 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// AddVote godoc
+// @Summary      新增投票
+// @Description  新增投票
+// @Tags         vote
+// @Accept       json
+// @Produce      json
+// @Param        title   query     string  true	"vote string"
+// @Success      200  {object}  e.ECode
+// @Router       /vote/add [post]
 func AddVote(context *gin.Context) {
 	idStr := context.Query("title")
 	optStr, _ := context.GetPostFormArray("opt_name[]")
@@ -46,6 +55,15 @@ func AddVote(context *gin.Context) {
 	context.JSON(http.StatusCreated, e.OK)
 }
 
+// UpdateVote godoc
+// @Summary      更新投票
+// @Description  更新投票
+// @Tags         vote
+// @Accept       json
+// @Produce      json
+// @Param        title   query     string  true	"vote string"
+// @Success      200  {object}  e.ECode
+// @Router       /vote/update [post]
 func UpdateVote(context *gin.Context) {
 	idStr := context.Query("title")
 	optStr, _ := context.GetPostFormArray("opt_name[]")
@@ -72,13 +90,22 @@ func UpdateVote(context *gin.Context) {
 	context.JSON(http.StatusCreated, e.OK)
 }
 
-// DelVote 删除一个投票
+// DelVote godoc
+// @Summary      删除投票
+// @Description  删除投票
+// @Tags         vote
+// @Accept       json
+// @Produce      json
+// @Param        title   query     string  true	"vote string"
+// @Success      200  {object}  e.ECode
+// @Router       /vote/del [post]
 func DelVote(context *gin.Context) {
 	var id int64
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
-	vote := model.GetVote(id)
-	if vote.Vote.Id < 1 {
+	// vote := model.GetVote(id)
+	voteInfo := model.GetVoteCache(context, id)
+	if voteInfo.Vote.Id < 1 {
 		context.JSON(http.StatusNoContent, e.OK)
 		return
 	}

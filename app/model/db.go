@@ -5,6 +5,7 @@ import (
 
 	"govote/app/tools/log"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -32,6 +33,18 @@ func NewMysql() {
 		log.L.Panicf("数据表AutoMigrate失败, err:%s\n", err)
 	}
 	Conn = conn
+}
+
+var Rdb *redis.Client
+
+func NewRedis() {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "127.0.0.1:6379",
+		Password: "", // no password set
+		DB:       8,  // use default DB
+	})
+
+	Rdb = rdb
 }
 
 func Close() {

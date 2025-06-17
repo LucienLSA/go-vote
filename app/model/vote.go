@@ -64,16 +64,24 @@ func GetVoteByName(name string) *Vote {
 
 func DoVote(userId, voteId int64, optIDs []int64) bool {
 	tx := Conn.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var ret Vote
 	if err := tx.Table("vote").Where("id = ?", voteId).First(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 		tx.Rollback()
+		return false
 	}
 
 	for _, value := range optIDs {
 		if err := tx.Table("vote_opt").Where("id = ?", value).Update("count", gorm.Expr("count + ?", 1)).Error; err != nil {
 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 		user := VoteOptUser{
 			VoteId:      voteId,
@@ -85,9 +93,14 @@ func DoVote(userId, voteId int64, optIDs []int64) bool {
 		if err != nil {
 			log.L.Errorf("创建投票记录失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 	}
-	tx.Commit()
+
+	if err := tx.Commit().Error; err != nil {
+		log.L.Errorf("提交事务失败, err:%s\n", err)
+		return false
+	}
 	return true
 }
 
@@ -125,20 +138,30 @@ func DoVoteV1(userId, voteId int64, optIDs []int64) bool {
 // 添加事务检验重复投票
 func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 	tx := Conn.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var ret Vote
 	if err := tx.Table("vote").Where("id = ?", voteId).First(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 		tx.Rollback()
+		return false
 	}
 
 	//检查是否投过票
 	var oldUser VoteOptUser
 	if err := tx.Table("vote_opt_user").Where("user_id = ? and vote_id = ?", userId, voteId).First(&oldUser).Error; err != nil {
-		log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
-		tx.Rollback()
-		return false
-	}
-	if oldUser.Id > 0 {
+		if err == gorm.ErrRecordNotFound {
+			// 用户没投过票，这是正常情况
+		} else {
+			log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
+			tx.Rollback()
+			return false
+		}
+	} else if oldUser.Id > 0 {
 		log.L.Error("用户已经投过票!")
 		tx.Rollback()
 		return false
@@ -148,6 +171,7 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 		if err := tx.Table("vote_opt").Where("id = ?", value).Update("count", gorm.Expr("count + ?", 1)).Error; err != nil {
 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 		user := VoteOptUser{
 			VoteId:      voteId,
@@ -159,29 +183,44 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 		if err != nil {
 			log.L.Errorf("创建投票记录失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 	}
-	tx.Commit()
+
+	if err := tx.Commit().Error; err != nil {
+		log.L.Errorf("提交事务失败, err:%s\n", err)
+		return false
+	}
 	return true
 }
 
 // 查询投票记录 原生SQL改造
 func DoVoteV3(userId, voteId int64, optIDs []int64) bool {
 	tx := Conn.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	var ret Vote
 	if err := tx.Raw(`select * from vote where id = ?`, voteId).Scan(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 		tx.Rollback()
+		return false
 	}
 
 	//检查是否投过票
 	var oldUser VoteOptUser
 	if err := tx.Raw(`select * from vote_opt_user where user_id = ? and vote_id = ? `, userId, voteId).Scan(&oldUser).Error; err != nil {
-		log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
-		tx.Rollback()
-		return false
-	}
-	if oldUser.Id > 0 {
+		if err == gorm.ErrRecordNotFound {
+			// 用户没投过票，这是正常情况
+		} else {
+			log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
+			tx.Rollback()
+			return false
+		}
+	} else if oldUser.Id > 0 {
 		log.L.Error("用户已经投过票!")
 		tx.Rollback()
 		return false
@@ -191,6 +230,7 @@ func DoVoteV3(userId, voteId int64, optIDs []int64) bool {
 		if err := tx.Exec(`update vote_opt set count = count + 1 where id = ? limit 1`, value).Error; err != nil {
 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 		user := VoteOptUser{
 			VoteId:      voteId,
@@ -211,9 +251,14 @@ func DoVoteV3(userId, voteId int64, optIDs []int64) bool {
 		if err != nil {
 			log.L.Errorf("创建投票记录失败, err:%s\n", err)
 			tx.Rollback()
+			return false
 		}
 	}
-	tx.Commit()
+
+	if err := tx.Commit().Error; err != nil {
+		log.L.Errorf("提交事务失败, err:%s\n", err)
+		return false
+	}
 	return true
 }
 

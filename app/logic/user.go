@@ -3,6 +3,7 @@ package logic
 import (
 	"fmt"
 	"govote/app/model"
+	"govote/app/param"
 	"govote/app/tools/auth"
 	"govote/app/tools/e"
 	"govote/app/tools/uid"
@@ -17,26 +18,17 @@ func GetRegister(context *gin.Context) {
 	context.HTML(http.StatusOK, "register.html", nil)
 }
 
-// 常见用户的结构体
-type CUser struct {
-	Name        string `json:"name" form:"name"`
-	Password    string `json:"password" form:"password"`
-	Password2   string `json:"password_2" form:"password_2"`
-	CaptchaId   string `json:"captcha_id" form:"captcha_id"`
-	CaptchaCode string `json:"captcha_code" form:"captcha_code"`
-}
-
 // CreateUser godoc
 // @Summary      用户注册
 // @Description  用户注册
 // @Tags         register
 // @Accept       json
 // @Produce      json
-// @Param        name   body      CUser true	"register User"
+// @Param        name   body      param.CUserData true	"register param.CUserData"
 // @Success      200  {object}  e.ECode
 // @Router       /user/create [post]
 func CreateUser(context *gin.Context) {
-	var user CUser
+	var user param.CUserData
 	if err := context.ShouldBind(&user); err != nil {
 		context.JSON(http.StatusOK, e.ParamErr)
 		return

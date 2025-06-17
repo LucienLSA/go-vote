@@ -12,6 +12,8 @@ func Start() {
 	log.L.Info("日志初始化成功!")
 	model.NewMysql()
 	log.L.Info("MySQL初始化成功!")
+	model.NewRedis()
+	log.L.Info("Redis初始化成功!")
 	defer func() {
 		model.Close()
 	}()

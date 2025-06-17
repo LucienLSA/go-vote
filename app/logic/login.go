@@ -2,6 +2,7 @@ package logic
 
 import (
 	"govote/app/model"
+	"govote/app/param"
 	"govote/app/tools/e"
 	"govote/app/tools/session"
 	"net/http"
@@ -9,13 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type User struct {
-	Name        string `json:"name" form:"name"`
-	Password    string `json:"password" form:"password"`
-	CaptchaId   string `json:"captcha_id" form:"captcha_id"`
-	CaptchaCode string `json:"captcha_code" form:"captcha_code"`
-}
 
 func GetLogin(context *gin.Context) {
 	context.HTML(http.StatusOK, "login.html", nil)
@@ -27,11 +21,11 @@ func GetLogin(context *gin.Context) {
 // @Tags         login
 // @Accept       json
 // @Produce      json
-// @Param        name   body      User true	"login User"
+// @Param        name   body      param.UserData true	"login param.UserData"
 // @Success      200  {object}  e.ECode
 // @Router       /login [post]
 func DoLogin(context *gin.Context) {
-	var user User
+	var user param.UserData
 	if err := context.ShouldBind(&user); err != nil {
 		context.JSON(http.StatusOK, e.ParamErr)
 		return
