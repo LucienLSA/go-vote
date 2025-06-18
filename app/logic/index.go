@@ -58,7 +58,7 @@ func GetVoteInfo(context *gin.Context) {
 func DoVote(context *gin.Context) {
 	var voteInfo param.VoteInfoData
 	// 使用session机制获取用户ID
-	values := session.GetSession(context)
+	values := session.GetSessionV1(context)
 	var userID int64
 	if v, ok := values["id"]; ok {
 		userID = v.(int64)

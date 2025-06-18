@@ -1,103 +1,402 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <title>投票项目-结果展示</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票系统 - 结果展示</title>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
     <!-- 引入 echarts.js -->
     <script src="https://cdn.staticfile.org/echarts/4.3.0/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .vote-list {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-list h2 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .vote-item {
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #4a5568;
+            display: block;
+        }
+
+        .vote-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .vote-item.selected {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .vote-item h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .vote-item .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h2 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        #echarts_main {
+            width: 100%;
+            height: 400px;
+            border-radius: 12px;
+            background: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-<main>
-    <div id="vote_table">
+    <div class="container">
+        <header class="header">
+            <h1>投票结果</h1>
+            <p>查看投票统计和图表分析</p>
+            <a href="/index" class="back-btn">返回首页</a>
+        </header>
 
+        <main class="main-content">
+            <section class="vote-list">
+                <h2>投票列表</h2>
+                <div id="vote_table">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="chart-container">
+                <h2>投票结果</h2>
+                <div id="echarts_main"></div>
+            </section>
+        </main>
     </div>
 
-    <div id="echarts_main" style="width: 600px;height:400px;">
+    <script type="text/javascript">
+        $(document).ready(function(){
+            loadData();
 
-    </div>
-</main>
-<script type="text/javascript">
-    $(document).ready(function(){
-        loadData()
-
-        $('body').on('click', '.ajax-trigger', function(event) {
-            // 阻止<a>标签的默认行为，即防止页面跳转
-            var myChart = echarts.init(document.getElementById('echarts_main'));
-            myChart.clear();
-            event.preventDefault();
-            $.ajax({
-                url: "/result/info",
-                type: "GET",
-                data:{
-                    id:$(this).attr("data"),
-                },
-                dataType: "json",
-                success: function(data) {
-                    // 指定图表的配置项和数据
-                    var myArray = [];
-                    for (const m of data.data.Opt) {
-                        var tmp = {
-                            value:m.Count,
-                            name:m.Name,
-                        }
-                        myArray.push(tmp)
-                    }
-                    option = {
-                        title: {
-                            text: data.data.Title,
-                            subtext: '投票详情',
-                            left: 'center'
-                        },
-                        tooltip: {
-                            trigger: 'item'
-                        },
-                        legend: {
-                            orient: 'vertical',
-                            left: 'left'
-                        },
-                        series: [
-                            {
-                                type: 'pie',
-                                radius: '50%',
-                                data: myArray,
-                            }
-                        ]
-                    };
-                    myChart.setOption(option);
-                },
-                error: function(data) {
-                    alert(data.message)
-                }
+            $('body').on('click', '.vote-item', function(event) {
+                event.preventDefault();
+                const voteId = $(this).data('id');
+                loadVoteResult(voteId);
+                
+                // 更新选中状态
+                $('.vote-item').removeClass('selected');
+                $(this).addClass('selected');
             });
         });
 
-
-    });
-
-    function loadData() {
-        $.ajax({
-            //请求资源路径
-            url:"/votes",
-            //请求参数
-            data:{
-            },
-            //请求方式
-            type:"get",
-            //数据形式
-            dataType:"json",
-            //请求成功后调用的回调函数
-            success:function (data) {
-                console.log(data)
-                for (const datum of data.data) {
-                    $("#vote_table").append('<a href="#" class="ajax-trigger" data="'+datum.Id+'">'+datum.Title+'</a></h2><br>');
+        function loadData() {
+            $.ajax({
+                url: "/votes",
+                type: "get",
+                dataType: "json",
+                success: function(data) {
+                    $("#vote_table").empty();
+                    
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(function(vote) {
+                            const statusClass = vote.Status === 1 ? 'active' : 'inactive';
+                            const statusText = vote.Status === 1 ? '进行中' : '已结束';
+                            
+                            const voteHtml = `
+                                <div class="vote-item" data-id="${vote.Id}">
+                                    <h3>${vote.Title}</h3>
+                                    <div class="status ${statusClass}">${statusText}</div>
+                                </div>
+                            `;
+                            $("#vote_table").append(voteHtml);
+                        });
+                    } else {
+                        $("#vote_table").html(`
+                            <div class="empty-state">
+                                <h3>暂无投票</h3>
+                                <p>当前没有可用的投票</p>
+                            </div>
+                        `);
+                    }
+                },
+                error: function() {
+                    $("#vote_table").html(`
+                        <div class="empty-state">
+                            <h3>加载失败</h3>
+                            <p>无法加载投票列表，请刷新页面重试</p>
+                        </div>
+                    `);
                 }
-            },
-            //请求失败后调用的回调函数
-            error:function () {
-                alert("数据加载失败！")
-            }
-        });
-    }
-</script>
+            });
+        }
+
+        function loadVoteResult(voteId) {
+            var myChart = echarts.init(document.getElementById('echarts_main'));
+            myChart.clear();
+            
+            // 显示加载状态
+            myChart.showLoading({
+                text: '加载中...',
+                color: '#667eea',
+                textColor: '#718096',
+                maskColor: 'rgba(255, 255, 255, 0.8)',
+                zlevel: 0
+            });
+
+            $.ajax({
+                url: "/result/info",
+                type: "GET",
+                data: { id: voteId },
+                dataType: "json",
+                success: function(data) {
+                    myChart.hideLoading();
+                    
+                    // 准备图表数据
+                    var chartData = [];
+                    for (const option of data.data.Opt) {
+                        var item = {
+                            value: option.Count,
+                            name: option.Name,
+                        };
+                        chartData.push(item);
+                    }
+
+                    // 图表配置
+                    var option = {
+                        title: {
+                            text: data.data.Title,
+                            subtext: '投票结果统计',
+                            left: 'center',
+                            textStyle: {
+                                fontSize: 18,
+                                fontWeight: 600,
+                                color: '#4a5568'
+                            },
+                            subtextStyle: {
+                                fontSize: 14,
+                                color: '#718096'
+                            }
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            textStyle: {
+                                color: '#4a5568'
+                            }
+                        },
+                        series: [
+                            {
+                                name: '投票结果',
+                                type: 'pie',
+                                radius: '50%',
+                                data: chartData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                },
+                                itemStyle: {
+                                    borderRadius: 8,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                }
+                            }
+                        ],
+                        color: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe']
+                    };
+                    
+                    myChart.setOption(option);
+                },
+                error: function(xhr) {
+                    myChart.hideLoading();
+                    myChart.clear();
+                    
+                    // 显示错误信息
+                    var errorOption = {
+                        title: {
+                            text: '加载失败',
+                            subtext: '无法获取投票结果数据',
+                            left: 'center',
+                            top: 'center',
+                            textStyle: {
+                                fontSize: 18,
+                                color: '#e53e3e'
+                            },
+                            subtextStyle: {
+                                fontSize: 14,
+                                color: '#718096'
+                            }
+                        }
+                    };
+                    myChart.setOption(errorOption);
+                }
+            });
+        }
+    </script>
 </body>
 </html>

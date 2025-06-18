@@ -1,93 +1,524 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <title>投票项目-详情</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票系统 - 首页</title>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .vote-list {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-list h2 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .vote-item {
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #4a5568;
+            display: block;
+        }
+
+        .vote-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .vote-item h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .vote-item .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status.inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .vote-detail {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-detail h2 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .vote-info {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .vote-info h3 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        .vote-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .meta-value {
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .vote-form {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .vote-form h4 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .option-item:hover {
+            border-color: #667eea;
+        }
+
+        .option-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .option-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 16px;
+            color: #4a5568;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .vote-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-<main>
-    <div id="vote_table">
+    <div class="container">
+        <header class="header">
+            <h1>投票系统</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <a href="/logout" class="logout-btn" id="logout-btn">退出登录</a>
+            </div>
+        </header>
 
+        <main class="main-content">
+            <section class="vote-list">
+                <h2>投票列表</h2>
+                <div id="vote_table">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="vote-detail">
+                <h2>投票详情</h2>
+                <div id="vote_info">
+                    <div class="empty-state">
+                        <h3>请选择一个投票</h3>
+                        <p>点击左侧投票列表查看详情</p>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
-    <!--    {{range $key,$value := .vote}}-->
-    <!--    <h2>{{$value.Title}}</h2>-->
-    <!--    {{end}}-->
-    <h1>
-        投票详情
-    </h1>
-    <div id="vote_info">
 
-    </div>
-</main>
-<script>
-    $(document).ready(function(){
-        loadData()
-        // 当点击<a>标签时触发AJAX请求
-        $('body').on('click', '.ajax-trigger', function(event) {
-            // 阻止<a>标签的默认行为，即防止页面跳转
-            event.preventDefault();
-            $("#vote_info").empty();
-            $.ajax({
-                url: "/vote",
-                type: "GET",
-                data:{
-                    id:$(this).attr("data"),
-                },
-                dataType: "json",
-                success: function(data) {
-                    var vote = data.data.Vote
-                    var h1 = $("<div></div>")
-                    h1.append('<h2>title:'+vote.Title+'</h2>')
-                    h1.append('<h2>id:'+vote.Id+'</h2>')
-                    h1.append('<h2>Type:'+vote.Type+'</h2>')
-                    h1.append('<h2>Status:'+vote.Status+'</h2>')
-                    $("#vote_info").append(h1)
+    <script>
+        $(document).ready(function(){
+            loadData();
+            
+            // 当点击投票项时触发AJAX请求
+            $('body').on('click', '.vote-item', function(event) {
+                event.preventDefault();
+                const voteId = $(this).data('id');
+                loadVoteDetail(voteId);
+                
+                // 更新选中状态
+                $('.vote-item').removeClass('selected');
+                $(this).addClass('selected');
+            });
 
-
-                    var form = $("<form method=\"post\" action=\"/vote\" ></form>")
-                    form.append(' <input type="hidden" name="vote_id" value="'+vote.Id+'">')
-
-                    for (const v of data.data.Opt) {
-                        form.append('<input type="checkbox" name="opt[]" id="customCheck'+v.Id+'" value="'+v.Id+'">');
-                        form.append('<label  for="customCheck'+v.Id+'">'+v.Name+'</label>');
-
-                    }
-
-                    form.append('<button type="submit">Submit</button>')
-                    $("#vote_info").append(form)
-
-
-                },
-                error: function(data) {
-                    alert(data.message)
+            // 退出登录
+            $('#logout-btn').on('click', function(e) {
+                e.preventDefault();
+                if (confirm('确定要退出登录吗？')) {
+                    $.ajax({
+                        url: "/logout",
+                        type: "POST",
+                        dataType: "json",
+                        success: function(data) {
+                            if (data.code === 0) {
+                                window.location.href = "/login";
+                            } else {
+                                alert(data.message || "退出失败");
+                            }
+                        },
+                        error: function() {
+                            alert("退出失败，请重试");
+                        }
+                    });
                 }
             });
         });
-    });
-    function loadData() {
-        $.ajax({
-            //请求资源路径
-            url:"/votes",
-            //请求参数
-            data:{
-            },
-            //请求方式
-            type:"get",
-            //数据形式
-            dataType:"json",
-            //请求成功后调用的回调函数
-            success:function (data) {
-                console.log(data)
-                for (const datum of data.data) {
-                    $("#vote_table").append('<a href="#" class="ajax-trigger" data="'+datum.Id+'">'+datum.Title+'</a ></h2><br>');
+
+        function loadData() {
+            $.ajax({
+                url: "/votes",
+                type: "get",
+                dataType: "json",
+                success: function(data) {
+                    $("#vote_table").empty();
+                    
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(function(vote) {
+                            const statusClass = vote.Status === 1 ? 'active' : 'inactive';
+                            const statusText = vote.Status === 1 ? '进行中' : '已结束';
+                            
+                            const voteHtml = `
+                                <div class="vote-item" data-id="${vote.Id}">
+                                    <h3>${vote.Title}</h3>
+                                    <div class="status ${statusClass}">${statusText}</div>
+                                </div>
+                            `;
+                            $("#vote_table").append(voteHtml);
+                        });
+                    } else {
+                        $("#vote_table").html(`
+                            <div class="empty-state">
+                                <h3>暂无投票</h3>
+                                <p>当前没有可用的投票</p>
+                            </div>
+                        `);
+                    }
+                },
+                error: function() {
+                    $("#vote_table").html(`
+                        <div class="empty-state">
+                            <h3>加载失败</h3>
+                            <p>无法加载投票列表，请刷新页面重试</p>
+                        </div>
+                    `);
                 }
-            },
-            //请求失败后调用的回调函数
-            error:function () {
-                alert("数据加载失败！")
-            }
-        });
-    }
-</script>
+            });
+        }
+
+        function loadVoteDetail(voteId) {
+            $("#vote_info").html(`
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            `);
+
+            $.ajax({
+                url: "/vote",
+                type: "GET",
+                data: { id: voteId },
+                dataType: "json",
+                success: function(data) {
+                    const vote = data.data.Vote;
+                    const options = data.data.Opt;
+                    
+                    let voteHtml = `
+                        <div class="vote-info">
+                            <h3>${vote.Title}</h3>
+                            <div class="vote-meta">
+                                <div class="meta-item">
+                                    <span class="meta-label">投票ID:</span>
+                                    <span class="meta-value">${vote.Id}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">类型:</span>
+                                    <span class="meta-value">${vote.Type === 0 ? '单选' : '多选'}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <span class="meta-label">状态:</span>
+                                    <span class="meta-value">
+                                        <span class="status ${vote.Status === 1 ? 'active' : 'inactive'}">
+                                            ${vote.Status === 1 ? '进行中' : '已结束'}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    if (vote.Status === 1) {
+                        voteHtml += `
+                            <form class="vote-form" method="post" action="/vote">
+                                <input type="hidden" name="vote_id" value="${vote.Id}">
+                                <h4>请选择您的选项：</h4>
+                        `;
+
+                        options.forEach(function(option) {
+                            const inputType = vote.Type === 0 ? 'radio' : 'checkbox';
+                            const name = vote.Type === 0 ? 'opt' : 'opt[]';
+                            
+                            voteHtml += `
+                                <div class="option-item">
+                                    <input type="${inputType}" name="${name}" id="option_${option.Id}" value="${option.Id}">
+                                    <label for="option_${option.Id}">${option.Name}</label>
+                                </div>
+                            `;
+                        });
+
+                        voteHtml += `
+                                <button type="submit" class="submit-btn">提交投票</button>
+                            </form>
+                        `;
+                    } else {
+                        voteHtml += `
+                            <div class="vote-form">
+                                <h4>投票选项：</h4>
+                        `;
+                        
+                        options.forEach(function(option) {
+                            voteHtml += `
+                                <div class="option-item">
+                                    <label>${option.Name} (${option.Count} 票)</label>
+                                </div>
+                            `;
+                        });
+                        
+                        voteHtml += `</div>`;
+                    }
+
+                    $("#vote_info").html(voteHtml);
+                },
+                error: function(xhr) {
+                    $("#vote_info").html(`
+                        <div class="empty-state">
+                            <h3>加载失败</h3>
+                            <p>无法加载投票详情，请重试</p>
+                        </div>
+                    `);
+                }
+            });
+        }
+    </script>
 </body>
 </html>

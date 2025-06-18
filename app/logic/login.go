@@ -60,14 +60,14 @@ func DoLogin(context *gin.Context) {
 		context.JSON(http.StatusOK, e.UserErr)
 		return
 	}
-	session.SetSession(context, user.Name, ret.Id)
+	session.SetSessionV1(context, user.Name, ret.Id)
 	context.JSON(http.StatusOK, e.OK)
 }
 
 func CheckUser(context *gin.Context) {
 	var name string
 	var id int64
-	values := session.GetSession(context)
+	values := session.GetSessionV1(context)
 	if v, ok := values["name"]; ok {
 		name = v.(string)
 	}
@@ -88,8 +88,16 @@ func CheckUser(context *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  e.ECode
-// @Router       /login [get]
+// @Router       /logout [post]
 func Logout(context *gin.Context) {
-	session.FlushSession(context)
-	context.Redirect(http.StatusFound, "/login")
+	session.FlushSessionV1(context)
+
+	// 检查请求的Content-Type，如果是JSON请求则返回JSON响应
+	if context.GetHeader("Content-Type") == "application/json" ||
+		context.Request.Method == "POST" {
+		context.JSON(http.StatusOK, e.OK)
+	} else {
+		// 否则重定向到登录页面
+		context.Redirect(http.StatusFound, "/login")
+	}
 }

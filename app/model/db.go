@@ -1,10 +1,13 @@
 package model
 
 import (
+	"context"
 	"fmt"
 
 	"govote/app/tools/log"
+	"govote/app/tools/session"
 
+	"github.com/rbcervilla/redisstore/v9"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -43,8 +46,13 @@ func NewRedis() {
 		Password: "", // no password set
 		DB:       8,  // use default DB
 	})
-
 	Rdb = rdb
+	// 初始化session
+	var err error
+	session.SessionStore, err = redisstore.NewRedisStore(context.TODO(), Rdb)
+	if err != nil {
+		log.L.Panicf("初始化redisStore失败, err:%s\n", err)
+	}
 }
 
 func Close() {

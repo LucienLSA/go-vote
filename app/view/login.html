@@ -1,149 +1,296 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="utf-8">
-    <title>投票项目 - 登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票系统 - 登录</title>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            padding: 20px;
         }
-        .main {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 300px;
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
         }
-        .main h2 {
+
+        .login-header {
             text-align: center;
-            color: #333;
             margin-bottom: 30px;
         }
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+
+        .login-header h1 {
+            color: #4a5568;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #718096;
             font-size: 14px;
         }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
         .captcha-container {
             display: flex;
-            align-items: center;
-            margin: 8px 0;
+            gap: 12px;
+            align-items: flex-end;
         }
-        .captcha-container input {
+
+        .captcha-container .form-group {
             flex: 1;
-            margin-right: 10px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
+            margin-bottom: 0;
         }
-        .captcha-container img {
-            height: 40px; /* Adjust as needed */
+
+        .captcha-image {
+            width: 120px;
+            height: 44px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
             cursor: pointer;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #718096;
         }
-        button {
+
+        .captcha-image:hover {
+            border-color: #667eea;
+        }
+
+        .login-btn {
             width: 100%;
-            padding: 12px;
-            background-color: #007bff;
+            padding: 14px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
             margin-top: 10px;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
-        button:disabled {
-            background-color: #ccc;
+
+        .login-btn:disabled {
+            background: #cbd5e0;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-            display: none;
-        }
-        .success-message {
-            color: #28a745;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
-            display: none;
-        }
-        .register-link {
-            text-align: center;
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
             margin-top: 15px;
             font-size: 14px;
+            text-align: center;
+            display: none;
         }
+
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #feb2b2;
+        }
+
+        .message.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
         .register-link a {
-            color: #007bff;
+            color: #667eea;
             text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
         }
+
         .register-link a:hover {
+            color: #5a67d8;
             text-decoration: underline;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+            
+            .captcha-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .captcha-image {
+                width: 100%;
+                height: 44px;
+            }
         }
     </style>
 </head>
 <body>
-<main class="main">
-    <h2>用户登录</h2>
-    <input type="text" name="name" id="name" placeholder="请输入用户名">
-    <input type="password" name="password" id="password" placeholder="请输入密码">
-    <div class="captcha-container">
-        <input type="text" id="captcha_code" placeholder="请输入验证码">
-        <img id="captcha_image" src="" alt="验证码" title="点击刷新">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>欢迎回来</h1>
+            <p>请登录您的账户</p>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="name">用户名</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="请输入用户名" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="请输入密码" required>
+            </div>
+
+            <div class="captcha-container">
+                <div class="form-group">
+                    <label for="captcha_code">验证码</label>
+                    <input type="text" id="captcha_code" name="captcha_code" class="form-input" placeholder="请输入验证码" required>
+                </div>
+                <img id="captcha_image" class="captcha-image" alt="验证码" title="点击刷新">
+            </div>
+
+            <button type="submit" id="login-btn" class="login-btn">
+                登录
+            </button>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div class="register-link">
+            <a href="/register">还没有账号？立即注册</a>
+        </div>
     </div>
-    <button type="submit" id="login_sub">登录</button>
-    <div id="error_message" class="error-message"></div>
-    <div id="success_message" class="success-message"></div>
-    <div class="register-link">
-        <a href="/register">还没有账号？立即注册</a>
-    </div>
-</main>
 
-<script>
-    var captchaId = ""; // 用于存储验证码ID
+    <script>
+        var captchaId = ""; // 用于存储验证码ID
 
-    $(document).ready(function(){
-        // 加载验证码
-        loadCaptcha();
-
-        // 点击验证码图片刷新
-        $("#captcha_image").on("click", function() {
+        $(document).ready(function(){
+            // 加载验证码
             loadCaptcha();
+
+            // 点击验证码图片刷新
+            $("#captcha_image").on("click", function() {
+                loadCaptcha();
+            });
+
+            // 表单提交
+            $("#login-form").on("submit", function(e) {
+                e.preventDefault();
+                handleLogin();
+            });
+
+            // 回车键登录
+            $("#captcha_code, #password").on("keypress", function(e) {
+                if(e.which == 13) {
+                    handleLogin();
+                }
+            });
         });
 
-        // 回车键登录
-        $("#captcha_code").on("keypress", function(e) {
-            if(e.which == 13) {
-                $("#login_sub").click();
-            }
-        });
-        $("#password").on("keypress", function(e) {
-            if(e.which == 13) {
-                $("#login_sub").click();
-            }
-        });
+        function loadCaptcha() {
+            $("#captcha_image").attr("src", ""); // 先清空
+            $.ajax({
+                url: "/captcha/generate",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    if (data.code === 0) {
+                        captchaId = data.data.captcha_id;
+                        $("#captcha_image").attr("src", data.data.captcha_image);
+                    } else {
+                        $("#captcha_image").attr("alt", "加载失败");
+                    }
+                },
+                error: function() {
+                    $("#captcha_image").attr("alt", "加载失败");
+                }
+            });
+        }
 
-        $("#login_sub").on("click", function() {
+        function handleLogin() {
             // 获取输入值
             var name = $("#name").val().trim();
             var password = $("#password").val().trim();
@@ -151,99 +298,66 @@
             
             // 验证输入
             if (!name) {
-                showError("请输入用户名");
+                showMessage("请输入用户名", "error");
                 return;
             }
             if (!password) {
-                showError("请输入密码");
+                showMessage("请输入密码", "error");
                 return;
             }
             if (!captchaCode) {
-                showError("请输入验证码");
+                showMessage("请输入验证码", "error");
                 return;
             }
 
             // 禁用按钮，显示加载状态
-            var $btn = $(this);
-            $btn.prop('disabled', true).text('登录中...');
+            var $btn = $("#login-btn");
+            $btn.prop('disabled', true).html('<div class="loading-spinner"></div>登录中...');
             
             // 清除之前的消息
-            hideMessages();
+            hideMessage();
 
             $.ajax({
                 url: "/login",
                 data: {
                     name: name,
                     password: password,
-                    captcha_id: captchaId, // 验证码ID
-                    captcha_code: captchaCode // 用户输入的验证码
+                    captcha_id: captchaId,
+                    captcha_code: captchaCode
                 },
                 type: "post",
                 dataType: "json",
                 success: function(data) {
-                    console.log("登录响应:", data);
-                    
                     if (data.code === 0) {
                         // 登录成功
-                        showSuccess("登录成功，正在跳转...");
+                        showMessage("登录成功，正在跳转...", "success");
                         setTimeout(function() {
                             window.location.href = "/index";
                         }, 1500);
                     } else {
                         // 登录失败
                         var errorMsg = data.message || "登录失败，请重试";
-                        showError(errorMsg);
+                        showMessage(errorMsg, "error");
                         $btn.prop('disabled', false).text('登录');
                         loadCaptcha(); // 刷新验证码
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error("登录请求失败:", error);
-                    showError("网络错误，请重试");
+                    showMessage("网络错误，请重试", "error");
                     $btn.prop('disabled', false).text('登录');
                     loadCaptcha(); // 刷新验证码
                 }
             });
-        });
-    });
+        }
 
-    function loadCaptcha() {
-        $.ajax({
-            url: "/captcha/generate", // 后端生成验证码的接口
-            type: "GET",
-            dataType: "json",
-            success: function(data) {
-                console.log("验证码加载响应:", data);
-                if (data.code === 0 && data.data) {
-                    // data.data 包含 captcha_id 和 captcha_image
-                    captchaId = data.data.captcha_id;
-                    $("#captcha_image").attr("src", data.data.captcha_image);
-                    $("#captcha_code").val(""); // 清空验证码输入框
-                } else {
-                    showError("验证码加载失败: " + (data.message || "未知错误"));
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("加载验证码失败:", error);
-                showError("无法连接到验证码服务");
-            }
-        });
-    }
+        function showMessage(message, type) {
+            var $message = $("#message");
+            $message.removeClass("error success").addClass(type).text(message).show();
+        }
 
-    function showError(message) {
-        $("#error_message").text(message).show();
-        $("#success_message").hide();
-    }
-
-    function showSuccess(message) {
-        $("#success_message").text(message).show();
-        $("#error_message").hide();
-    }
-
-    function hideMessages() {
-        $("#error_message").hide();
-        $("#success_message").hide();
-    }
-</script>
+        function hideMessage() {
+            $("#message").hide();
+        }
+    </script>
 </body>
 </html>
