@@ -21,7 +21,7 @@ func New() {
 		//login
 		r.GET("/login", logic.GetLogin)
 		r.POST("/login", logic.DoLogin)
-		r.POST("/logout", logic.Logout)
+		r.GET("/logout", logic.Logout)
 
 		//register
 		r.GET("/register", logic.GetRegister)
@@ -46,9 +46,6 @@ func New() {
 		index.GET("/vote", logic.GetVoteInfo)
 		// 投票
 		index.POST("/vote", logic.DoVote)
-
-		// 用户信息
-		index.GET("/user/info", logic.GetUserInfo)
 
 		// 添加、删除和更新投票
 		index.POST("/vote/add", logic.AddVote)

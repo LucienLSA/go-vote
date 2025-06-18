@@ -70,8 +70,8 @@ func DoVote(context *gin.Context) {
 	voteInfo.VoteID, _ = strconv.ParseInt(voteIdStr, 10, 64)
 
 	//查询是否投过票了
-	voteUser := model.GetVoteHistory(voteInfo.UserID, voteInfo.VoteID)
-	if len(voteUser) > 0 {
+	voteUser, err := model.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
+	if len(voteUser) > 0 || err != nil {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
 	}
@@ -88,7 +88,7 @@ func DoVote(context *gin.Context) {
 		return
 	}
 	// 投票完成删除缓存，设置为过期
-	err := model.CleanVote(context, voteInfo.UserID)
+	err = model.CleanVote(context, voteInfo.UserID)
 	if err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return

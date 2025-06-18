@@ -353,14 +353,14 @@ func DoVoteV3(userId, voteId int64, optIDs []int64) bool {
 	return true
 }
 
-func GetVoteHistory(userId, voteId int64) []VoteOptUser {
+func GetVoteUser(userId, voteId int64) ([]VoteOptUser, error) {
 	//检查是否投过票
 	ret := make([]VoteOptUser, 0)
 	if err := Conn.Raw(`select * from vote_opt_user where user_id = ? and vote_id = ?`, userId, voteId).Scan(&ret).Error; err != nil {
 		log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
-		return nil
+		return nil, err
 	}
-	return ret
+	return ret, nil
 }
 
 func AddVote(vote Vote, opt []VoteOpt) error {

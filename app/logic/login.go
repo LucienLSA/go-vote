@@ -88,56 +88,8 @@ func CheckUser(context *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Success      200  {object}  e.ECode
-// @Router       /logout [post]
+// @Router       /login [get]
 func Logout(context *gin.Context) {
 	session.FlushSession(context)
-	context.JSON(http.StatusOK, e.ECode{
-		Code:    0,
-		Message: "退出登录成功",
-	})
-}
-
-// GetUserInfo godoc
-// @Summary      获取用户信息
-// @Description  获取当前登录用户信息
-// @Tags         login
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  e.ECode
-// @Router       /user/info [get]
-func GetUserInfo(context *gin.Context) {
-	values := session.GetSession(context)
-	var name string
-	var id int64
-
-	if v, ok := values["name"]; ok {
-		name = v.(string)
-	}
-	if v, ok := values["id"]; ok {
-		id = v.(int64)
-	}
-
-	if name == "" || id < 0 {
-		context.JSON(http.StatusUnauthorized, e.NotLogin)
-		return
-	}
-
-	// 获取用户详细信息
-	user, err := model.GetUser(name)
-	if err != nil {
-		context.JSON(http.StatusOK, e.ServerErr)
-		return
-	}
-
-	// 返回用户信息（不包含密码）
-	userInfo := map[string]interface{}{
-		"id":   user.Id,
-		"name": user.Name,
-		"uuid": user.Uuid,
-	}
-
-	context.JSON(http.StatusOK, e.ECode{
-		Code: 0,
-		Data: userInfo,
-	})
+	context.Redirect(http.StatusFound, "/login")
 }
