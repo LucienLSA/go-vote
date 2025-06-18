@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // GetRegister 渲染注册页面
@@ -56,20 +57,45 @@ func CreateUser(context *gin.Context) {
 		return
 	}
 
-	//这里有一个巨大的BUG，并发安全！
-	if oldUser, _ := model.GetUser(user.Name); oldUser.Id > 0 {
+	// 使用事务来确保并发安全
+	tx := model.Conn.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 在事务中检查用户是否存在
+	var existingUser model.User
+	err := tx.Table("user").Where("name = ?", user.Name).First(&existingUser).Error
+	if err == nil {
+		// 用户已存在
+		tx.Rollback()
 		context.JSON(http.StatusOK, e.UserExistsErr)
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		// 其他错误
+		tx.Rollback()
+		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 
 	newUser := model.User{
-		Uuid:        uid.GetUUID(),
+		// Uuid:        uid.GetUUID(),
+		Uuid:        uid.GenSnowID(),
 		Name:        user.Name,
 		Password:    auth.EncryptV2(user.Password),
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	}
-	if err := model.CreateUser(&newUser); err != nil {
+
+	if err := tx.Create(&newUser).Error; err != nil {
+		tx.Rollback()
+		context.JSON(http.StatusOK, e.ServerErr)
+		return
+	}
+
+	if err := tx.Commit().Error; err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

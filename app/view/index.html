@@ -1,93 +1,605 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <title>投票项目-详情</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投票系统 - 首页</title>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部导航 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .logout-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        /* 主要内容区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        /* 投票列表 */
+        .vote-list {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-list h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vote-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        .vote-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .vote-item h3 {
+            color: #495057;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .vote-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .vote-type {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .vote-status {
+            background: #e8f5e8;
+            color: #388e3c;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .vote-status.expired {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        /* 投票详情 */
+        .vote-detail {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .vote-detail h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vote-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .vote-info h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .vote-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* 投票表单 */
+        .vote-form {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .vote-form h4 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .option-item:hover {
+            background: #e9ecef;
+        }
+
+        .option-item input[type="checkbox"],
+        .option-item input[type="radio"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .option-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .user-info {
+                flex-direction: column;
+            }
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
 </head>
 <body>
-<main>
-    <div id="vote_table">
+    <div class="container">
+        <!-- 头部导航 -->
+        <div class="header">
+            <h1><i class="fas fa-poll"></i> 投票系统</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="userName">用户</span>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    退出登录
+                </button>
+            </div>
+        </div>
 
-    </div>
-    <!--    {{range $key,$value := .vote}}-->
-    <!--    <h2>{{$value.Title}}</h2>-->
-    <!--    {{end}}-->
-    <h1>
-        投票详情
-    </h1>
-    <div id="vote_info">
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 投票列表 -->
+            <div class="vote-list">
+                <h2><i class="fas fa-list"></i> 投票列表</h2>
+                <div id="vote_table">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
 
+            <!-- 投票详情 -->
+            <div class="vote-detail">
+                <h2><i class="fas fa-info-circle"></i> 投票详情</h2>
+                <div id="vote_info">
+                    <div class="loading">
+                        <i class="fas fa-hand-pointer"></i>
+                        <p>请选择一个投票查看详情</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
-<script>
-    $(document).ready(function(){
-        loadData()
-        // 当点击<a>标签时触发AJAX请求
-        $('body').on('click', '.ajax-trigger', function(event) {
-            // 阻止<a>标签的默认行为，即防止页面跳转
-            event.preventDefault();
-            $("#vote_info").empty();
+
+    <script>
+        $(document).ready(function(){
+            // 获取用户信息
+            getUserInfo();
+            
+            // 加载投票列表
+            loadData();
+            
+            // 退出登录
+            $("#logoutBtn").on("click", function() {
+                if (confirm("确定要退出登录吗？")) {
+                    logout();
+                }
+            });
+
+            // 当点击投票项时触发AJAX请求
+            $('body').on('click', '.vote-item', function(event) {
+                event.preventDefault();
+                const voteId = $(this).data('id');
+                loadVoteDetail(voteId);
+                
+                // 更新选中状态
+                $('.vote-item').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            // 投票表单提交
+            $('body').on('submit', '.vote-form', function(event) {
+                event.preventDefault();
+                submitVote($(this));
+            });
+        });
+
+        // 获取用户信息
+        function getUserInfo() {
+            $.ajax({
+                url: "/user/info",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    if (data.code === 0 && data.data) {
+                        const userName = data.data.name || "用户";
+                        $("#userName").text(userName);
+                        $("#userAvatar").text(userName.charAt(0).toUpperCase());
+                    }
+                },
+                error: function() {
+                    console.log("获取用户信息失败");
+                }
+            });
+        }
+
+        // 退出登录
+        function logout() {
+            $.ajax({
+                url: "/logout",
+                type: "POST",
+                dataType: "json",
+                success: function(data) {
+                    if (data.code === 0) {
+                        alert("退出登录成功");
+                        window.location.href = "/login";
+                    } else {
+                        alert("退出登录失败：" + data.message);
+                    }
+                },
+                error: function() {
+                    alert("退出登录失败，请重试");
+                    window.location.href = "/login";
+                }
+            });
+        }
+
+        // 加载投票列表
+        function loadData() {
+            $.ajax({
+                url: "/votes",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    console.log("投票列表数据:", data);
+                    $("#vote_table").empty();
+                    
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(function(vote) {
+                            const voteItem = createVoteItem(vote);
+                            $("#vote_table").append(voteItem);
+                        });
+                    } else {
+                        $("#vote_table").html('<div class="loading"><i class="fas fa-inbox"></i><p>暂无投票</p></div>');
+                    }
+                },
+                error: function() {
+                    $("#vote_table").html('<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>加载失败</p></div>');
+                }
+            });
+        }
+
+        // 创建投票项
+        function createVoteItem(vote) {
+            const typeText = vote.Type === 0 ? "单选" : "多选";
+            const statusText = vote.Status === 0 ? "进行中" : "已结束";
+            const statusClass = vote.Status === 0 ? "" : "expired";
+            
+            return `
+                <div class="vote-item fade-in" data-id="${vote.Id}">
+                    <h3>${vote.Title}</h3>
+                    <div class="vote-meta">
+                        <span class="vote-type">${typeText}</span>
+                        <span class="vote-status ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 加载投票详情
+        function loadVoteDetail(voteId) {
+            $("#vote_info").html('<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>加载中...</p></div>');
+            
             $.ajax({
                 url: "/vote",
                 type: "GET",
-                data:{
-                    id:$(this).attr("data"),
-                },
+                data: { id: voteId },
                 dataType: "json",
                 success: function(data) {
-                    var vote = data.data.Vote
-                    var h1 = $("<div></div>")
-                    h1.append('<h2>title:'+vote.Title+'</h2>')
-                    h1.append('<h2>id:'+vote.Id+'</h2>')
-                    h1.append('<h2>Type:'+vote.Type+'</h2>')
-                    h1.append('<h2>Status:'+vote.Status+'</h2>')
-                    $("#vote_info").append(h1)
-
-
-                    var form = $("<form method=\"post\" action=\"/vote\" ></form>")
-                    form.append(' <input type="hidden" name="vote_id" value="'+vote.Id+'">')
-
-                    for (const v of data.data.Opt) {
-                        form.append('<input type="checkbox" name="opt[]" id="customCheck'+v.Id+'" value="'+v.Id+'">');
-                        form.append('<label  for="customCheck'+v.Id+'">'+v.Name+'</label>');
-
+                    console.log("投票详情数据:", data);
+                    
+                    if (data.code === 0 && data.data) {
+                        const vote = data.data.Vote;
+                        const options = data.data.Opt;
+                        
+                        const voteDetail = createVoteDetail(vote, options);
+                        $("#vote_info").html(voteDetail);
+                    } else {
+                        $("#vote_info").html('<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>加载失败</p></div>');
                     }
-
-                    form.append('<button type="submit">Submit</button>')
-                    $("#vote_info").append(form)
-
-
                 },
-                error: function(data) {
-                    alert(data.message)
+                error: function() {
+                    $("#vote_info").html('<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>加载失败</p></div>');
                 }
             });
-        });
-    });
-    function loadData() {
-        $.ajax({
-            //请求资源路径
-            url:"/votes",
-            //请求参数
-            data:{
-            },
-            //请求方式
-            type:"get",
-            //数据形式
-            dataType:"json",
-            //请求成功后调用的回调函数
-            success:function (data) {
-                console.log(data)
-                for (const datum of data.data) {
-                    $("#vote_table").append('<a href="#" class="ajax-trigger" data="'+datum.Id+'">'+datum.Title+'</a ></h2><br>');
+        }
+
+        // 创建投票详情
+        function createVoteDetail(vote, options) {
+            const typeText = vote.Type === 0 ? "单选" : "多选";
+            const statusText = vote.Status === 0 ? "进行中" : "已结束";
+            const statusClass = vote.Status === 0 ? "" : "expired";
+            const inputType = vote.Type === 0 ? "radio" : "checkbox";
+            const formAction = vote.Status === 0 ? "" : "disabled";
+            
+            let optionsHtml = "";
+            options.forEach(function(option) {
+                optionsHtml += `
+                    <div class="option-item">
+                        <input type="${inputType}" name="opt[]" id="opt${option.Id}" value="${option.Id}" ${formAction}>
+                        <label for="opt${option.Id}">${option.Name}</label>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="vote-info fade-in">
+                    <h3>${vote.Title}</h3>
+                    <div class="vote-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">${vote.Id}</div>
+                            <div class="stat-label">投票ID</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${typeText}</div>
+                            <div class="stat-label">投票类型</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">${options.length}</div>
+                            <div class="stat-label">选项数量</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number ${statusClass}">${statusText}</div>
+                            <div class="stat-label">状态</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${vote.Status === 0 ? `
+                    <form class="vote-form fade-in" method="post" action="/vote">
+                        <input type="hidden" name="vote_id" value="${vote.Id}">
+                        <h4><i class="fas fa-check-circle"></i> 请选择您的答案：</h4>
+                        ${optionsHtml}
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i> 提交投票
+                        </button>
+                    </form>
+                ` : `
+                    <div class="vote-form fade-in">
+                        <h4><i class="fas fa-clock"></i> 投票已结束</h4>
+                        <p style="color: #6c757d; text-align: center;">此投票已结束，无法继续参与</p>
+                    </div>
+                `}
+            `;
+        }
+
+        // 提交投票
+        function submitVote($form) {
+            const $btn = $form.find('.submit-btn');
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> 提交中...');
+            
+            const formData = $form.serialize();
+            
+            $.ajax({
+                url: "/vote",
+                type: "POST",
+                data: formData,
+                dataType: "json",
+                success: function(data) {
+                    if (data.code === 0) {
+                        alert("投票提交成功！");
+                        // 重新加载投票详情
+                        const voteId = $form.find('input[name="vote_id"]').val();
+                        loadVoteDetail(voteId);
+                    } else {
+                        alert("投票提交失败：" + data.message);
+                        $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 提交投票');
+                    }
+                },
+                error: function() {
+                    alert("投票提交失败，请重试");
+                    $btn.prop('disabled', false).html('<i class="fas fa-paper-plane"></i> 提交投票');
                 }
-            },
-            //请求失败后调用的回调函数
-            error:function () {
-                alert("数据加载失败！")
-            }
-        });
-    }
-</script>
+            });
+        }
+    </script>
 </body>
 </html>

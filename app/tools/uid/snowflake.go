@@ -1,4 +1,4 @@
-package snowflake
+package uid
 
 import (
 	"time"
@@ -19,6 +19,9 @@ func InitSnowflake(startTime string, machineID int64) (err error) {
 	return
 }
 
-func GenID() int64 {
+func GenSnowID() int64 {
+	if node == nil {
+		panic("雪花算法未初始化，请先调用 InitSnowflake")
+	}
 	return node.Generate().Int64()
 }
