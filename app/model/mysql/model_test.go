@@ -42,7 +42,7 @@ func TestGetVoteV1(t *testing.T) {
 func TestDoVote(t *testing.T) {
 	NewMysql()
 	//测试用例
-	r := DoVote(1, 1, []int64{1, 2})
+	r := DoVoteV2(1, 1, []int64{1, 2})
 	fmt.Printf("ret:%+v", r)
 	Close()
 }

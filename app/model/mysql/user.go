@@ -10,9 +10,8 @@ import (
 
 // func CreateUser
 
-func GetUser(name string) (model.User, error) {
+func GetUser(ctx context.Context, name string) (model.User, error) {
 	var ret model.User
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	err := db.Table("user").Where("name = ?", name).First(&ret).Error
 	if err != nil {
@@ -27,9 +26,8 @@ func GetUser(name string) (model.User, error) {
 }
 
 // 原生SQL改造
-func GetUserV1(name string) (*model.User, error) {
+func GetUserV1(ctx context.Context, name string) (*model.User, error) {
 	var ret model.User
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	err := db.Raw(`select * from user where name = ? limit 1`, name).Scan(&ret).Error
 	if err != nil {
@@ -43,8 +41,7 @@ func GetUserV1(name string) (*model.User, error) {
 	return &ret, nil
 }
 
-func CreateUser(user *model.User) error {
-	ctx := context.Background()
+func CreateUser(ctx context.Context, user *model.User) error {
 	db := NewDBClient(ctx)
 	err := db.Create(user).Error
 	if err != nil {
