@@ -3,6 +3,7 @@ package logic
 import (
 	"fmt"
 	"govote/app/model"
+	"govote/app/model/mysql"
 	"govote/app/param"
 	"govote/app/tools/auth"
 	"govote/app/tools/e"
@@ -58,24 +59,11 @@ func CreateUser(context *gin.Context) {
 	}
 
 	// 使用事务来确保并发安全
-	tx := model.Conn.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// 在事务中检查用户是否存在
-	var existingUser model.User
-	err := tx.Table("user").Where("name = ?", user.Name).First(&existingUser).Error
-	if err == nil {
-		// 用户已存在
-		tx.Rollback()
+	existingUser, err := mysql.GetUserV1(user.Name)
+	if err == gorm.ErrRecordNotFound {
 		context.JSON(http.StatusOK, e.UserExistsErr)
 		return
 	} else if err != gorm.ErrRecordNotFound {
-		// 其他错误
-		tx.Rollback()
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

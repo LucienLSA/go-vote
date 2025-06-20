@@ -1,23 +1,18 @@
-package model
+package mysql
 
 import (
 	"context"
 	"fmt"
-
+	"govote/app/model"
 	"govote/app/tools/log"
-	"govote/app/tools/session"
 
-	"github.com/rbcervilla/redisstore/v9"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 )
 
-// 数据库操作都放在这里
-
-var Conn *gorm.DB
+var _db *gorm.DB
 
 func NewMysql() {
 	my := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", "root", "123456", "localhost:3306", "vote")
@@ -31,31 +26,19 @@ func NewMysql() {
 	if err != nil {
 		log.L.Panicf("数据库变量初始化失败, err:%s\n", err)
 	}
-	err = conn.AutoMigrate(&Vote{}, &User{}, &VoteOpt{}, &VoteOptUser{})
+	err = conn.AutoMigrate(&model.Vote{}, &model.User{}, &model.VoteOpt{}, &model.VoteOptUser{})
 	if err != nil {
 		log.L.Panicf("数据表AutoMigrate失败, err:%s\n", err)
 	}
-	Conn = conn
+	_db = conn
 }
 
-var Rdb *redis.Client
-
-func NewRedis() {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     "127.0.0.1:6379",
-		Password: "", // no password set
-		DB:       8,  // use default DB
-	})
-	Rdb = rdb
-	// 初始化session
-	var err error
-	session.SessionStore, err = redisstore.NewRedisStore(context.TODO(), Rdb)
-	if err != nil {
-		log.L.Panicf("初始化redisStore失败, err:%s\n", err)
-	}
+func NewDBClient(ctx context.Context) *gorm.DB {
+	db := _db
+	return db.WithContext(ctx)
 }
 
 func Close() {
-	db, _ := Conn.DB()
+	db, _ := _db.DB()
 	_ = db.Close()
 }

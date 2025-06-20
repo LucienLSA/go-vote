@@ -2,6 +2,8 @@ package logic
 
 import (
 	"govote/app/model"
+	"govote/app/model/mysql"
+	"govote/app/model/redis_cache"
 	"govote/app/tools/e"
 	"net/http"
 	"strconv"
@@ -34,7 +36,7 @@ func AddVote(context *gin.Context) {
 		return
 	}
 	// 幂等性，在添加投票记录前查询是否存在
-	oldVote := model.GetVoteByName(idStr)
+	oldVote := mysql.GetVoteByName(idStr)
 	if oldVote.Id > 0 {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
@@ -47,7 +49,7 @@ func AddVote(context *gin.Context) {
 		})
 	}
 
-	if err := model.AddVote(vote, opt); err != nil {
+	if err := mysql.AddVote(vote, opt); err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
@@ -82,7 +84,7 @@ func UpdateVote(context *gin.Context) {
 			CreatedTime: time.Now(),
 		})
 	}
-	if err := model.UpdateVote(vote, opt); err != nil {
+	if err := mysql.UpdateVote(vote, opt); err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
@@ -104,12 +106,12 @@ func DelVote(context *gin.Context) {
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
 	// vote := model.GetVote(id)
-	voteInfo := model.GetVoteCache(context, id)
+	voteInfo := redis_cache.GetVoteCache(context, id)
 	if voteInfo.Vote.Id < 1 {
 		context.JSON(http.StatusNoContent, e.OK)
 		return
 	}
-	if ok := model.DelVote(id); !ok {
+	if ok := mysql.DelVote(id); !ok {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

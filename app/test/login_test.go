@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"govote/app/model"
+	"govote/app/model/mysql"
 	"govote/app/tools/auth"
 	"testing"
 	"time"
@@ -13,8 +14,8 @@ import (
 // TestLoginFunctionality 测试登录功能
 func TestLoginFunctionality(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 测试用例
 	testCases := []struct {
@@ -34,7 +35,7 @@ func TestLoginFunctionality(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			user, err := model.GetUser(tc.username)
+			user, err := mysql.GetUser(tc.username)
 
 			if tc.expected {
 				// 期望登录成功
@@ -67,12 +68,12 @@ func TestLoginFunctionality(t *testing.T) {
 // TestUserData 测试用户数据
 func TestUserData(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 获取所有用户
 	var users []model.User
-	if err := model.Conn.Find(&users).Error; err != nil {
+	if err := mysql.Conn.Find(&users).Error; err != nil {
 		t.Fatalf("获取用户数据失败: %s", err)
 	}
 
@@ -149,8 +150,8 @@ func TestLoginResponse(t *testing.T) {
 // TestUserCreation 测试用户创建功能
 func TestUserCreation(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 测试用户创建
 	testUser := model.User{
@@ -161,13 +162,13 @@ func TestUserCreation(t *testing.T) {
 	}
 
 	// 检查用户是否已存在
-	if existingUser, err := model.GetUser(testUser.Name); err == nil && existingUser.Id > 0 {
+	if existingUser, err := mysql.GetUser(testUser.Name); err == nil && existingUser.Id > 0 {
 		t.Logf("测试用户已存在，跳过创建: %s", testUser.Name)
 		return
 	}
 
 	// 创建用户
-	if err := model.CreateUser(&testUser); err != nil {
+	if err := mysql.CreateUser(&testUser); err != nil {
 		t.Errorf("创建用户失败: %s", err)
 		return
 	}
@@ -178,7 +179,7 @@ func TestUserCreation(t *testing.T) {
 	}
 
 	// 验证可以查询到新创建的用户
-	createdUser, err := model.GetUser(testUser.Name)
+	createdUser, err := mysql.GetUser(testUser.Name)
 	if err != nil {
 		t.Errorf("查询新创建的用户失败: %s", err)
 		return

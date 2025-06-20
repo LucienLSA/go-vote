@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"govote/app/model"
+	"govote/app/model/redis_cache"
 	"govote/app/tools/e"
 	"net/http"
 	"strconv"
@@ -31,7 +31,7 @@ func ResultVote(context *gin.Context) {
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
 	// ret := model.GetVote(id)
-	ret := model.GetVoteCache(context, id)
+	ret := redis_cache.GetVoteCache(context, id)
 	data := ResultData{
 		Title: ret.Vote.Title,
 	}

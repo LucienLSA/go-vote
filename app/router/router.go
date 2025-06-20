@@ -18,7 +18,7 @@ func New() {
 	r.GET("/", logic.Index)
 	// 用户注册与登录
 	{
-		//login
+		//login logout
 		r.GET("/login", logic.GetLogin)
 		r.POST("/login", logic.DoLogin)
 		r.GET("/logout", logic.Logout)

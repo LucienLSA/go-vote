@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"govote/app/model"
+	"govote/app/model/mysql"
 	"govote/app/tools/auth"
 	"govote/app/tools/log"
 	"govote/app/tools/uid"
@@ -16,8 +17,8 @@ func TestInsertTestData(t *testing.T) {
 	log.NewLogger()
 
 	// 初始化数据库连接
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	t.Log("开始插入测试数据...")
 
@@ -59,7 +60,7 @@ func testInsertTestUsers(t *testing.T) {
 		t.Logf("尝试创建用户: %s", user.Name)
 
 		// 检查用户是否已存在
-		existingUser, err := model.GetUser(user.Name)
+		existingUser, err := mysql.GetUser(user.Name)
 		if err == nil && existingUser.Id > 0 {
 			t.Logf("用户 %s 已存在 (ID: %d)，跳过创建", user.Name, existingUser.Id)
 			continue
@@ -75,7 +76,7 @@ func testInsertTestUsers(t *testing.T) {
 			UpdatedTime: time.Now(),
 		}
 
-		if err := model.CreateUser(&newUser); err != nil {
+		if err := mysql.CreateUser(&newUser); err != nil {
 			t.Errorf("创建用户失败: %s", err.Error())
 		} else {
 			t.Logf("成功创建用户: %s (ID: %d, UUID: %d)", newUser.Name, newUser.Id, newUser.Uuid)
@@ -91,7 +92,7 @@ func testInsertTestVotes(t *testing.T) {
 
 	// 获取用户ID
 	var users []model.User
-	if err := model.Conn.Find(&users).Error; err != nil {
+	if err := mysql.Conn.Find(&users).Error; err != nil {
 		t.Fatalf("获取用户失败: %s", err.Error())
 	}
 
@@ -151,12 +152,12 @@ func testInsertTestVotes(t *testing.T) {
 	for _, vote := range votes {
 		// 检查投票是否已存在，避免重复插入导致错误
 		var existingVote model.Vote
-		if err := model.Conn.Where("title = ?", vote.Title).First(&existingVote).Error; err == nil && existingVote.Id > 0 {
+		if err := mysql.Conn.Where("title = ?", vote.Title).First(&existingVote).Error; err == nil && existingVote.Id > 0 {
 			t.Logf("投票 \"%s\" (ID: %d) 已存在，跳过插入", vote.Title, existingVote.Id)
 			continue
 		}
 
-		if err := model.Conn.Create(&vote).Error; err != nil {
+		if err := mysql.Conn.Create(&vote).Error; err != nil {
 			t.Errorf("插入投票失败: %s", err.Error())
 		} else {
 			t.Logf("成功插入投票: %s (ID: %d, 类型: %s, 状态: %s)",
@@ -173,7 +174,7 @@ func testInsertTestVoteOptions(t *testing.T) {
 
 	// 获取投票ID
 	var votes []model.Vote
-	if err := model.Conn.Find(&votes).Error; err != nil {
+	if err := mysql.Conn.Find(&votes).Error; err != nil {
 		t.Fatalf("获取投票失败: %s", err.Error())
 	}
 
@@ -231,11 +232,11 @@ func testInsertTestVoteOptions(t *testing.T) {
 		for _, option := range options {
 			// 检查选项是否已存在，避免重复插入导致错误
 			var existingOpt model.VoteOpt
-			if err := model.Conn.Where("name = ? AND vote_id = ?", option.Name, option.VoteId).First(&existingOpt).Error; err == nil && existingOpt.Id > 0 {
+			if err := mysql.Conn.Where("name = ? AND vote_id = ?", option.Name, option.VoteId).First(&existingOpt).Error; err == nil && existingOpt.Id > 0 {
 				t.Logf("选项 \"%s\" (投票ID: %d) 已存在，跳过插入", option.Name, option.VoteId)
 				continue
 			}
-			if err := model.Conn.Create(&option).Error; err != nil {
+			if err := mysql.Conn.Create(&option).Error; err != nil {
 				t.Errorf("插入投票选项失败: %s", err.Error())
 			} else {
 				t.Logf("成功插入选项: %s (投票ID: %d, 选项ID: %d)",
@@ -253,11 +254,11 @@ func testInsertTestVoteRecords(t *testing.T) {
 	var users []model.User
 	var voteOpts []model.VoteOpt
 
-	if err := model.Conn.Find(&users).Error; err != nil {
+	if err := mysql.Conn.Find(&users).Error; err != nil {
 		t.Fatalf("获取用户失败: %s", err.Error())
 	}
 
-	if err := model.Conn.Find(&voteOpts).Error; err != nil {
+	if err := mysql.Conn.Find(&voteOpts).Error; err != nil {
 		t.Fatalf("获取投票选项失败: %s", err.Error())
 	}
 
@@ -322,7 +323,7 @@ func testInsertTestVoteRecords(t *testing.T) {
 
 		// 检查投票记录是否已存在，避免重复插入导致错误
 		var existingRecord model.VoteOptUser
-		if err := model.Conn.Where("user_id = ? AND vote_id = ? AND vote_opt_id = ?",
+		if err := mysql.Conn.Where("user_id = ? AND vote_id = ? AND vote_opt_id = ?",
 			testVote.userId, testVote.voteId, targetOpt.Id).First(&existingRecord).Error; err == nil && existingRecord.Id > 0 {
 			t.Logf("投票记录已存在: 用户%d 投票给选项%d (投票%d)，跳过插入",
 				testVote.userId, targetOpt.Id, testVote.voteId)
@@ -337,7 +338,7 @@ func testInsertTestVoteRecords(t *testing.T) {
 			CreatedTime: time.Now(),
 		}
 
-		if err := model.Conn.Create(&voteRecord).Error; err != nil {
+		if err := mysql.Conn.Create(&voteRecord).Error; err != nil {
 			t.Errorf("插入投票记录失败: %s", err.Error())
 		} else {
 			t.Logf("成功插入投票记录: 用户%d 投票给选项\"%s\" (投票%d)",
@@ -345,8 +346,8 @@ func testInsertTestVoteRecords(t *testing.T) {
 		}
 
 		// 更新选项计数 (注意：这里的计数更新应该在提交投票时由业务逻辑完成，这里只是为了测试数据完整性)
-		if err := model.Conn.Model(&model.VoteOpt{}).Where("id = ?", targetOpt.Id).
-			Update("count", model.Conn.Raw("count + 1")).Error; err != nil {
+		if err := mysql.Conn.Model(&model.VoteOpt{}).Where("id = ?", targetOpt.Id).
+			Update("count", mysql.Conn.Raw("count + 1")).Error; err != nil {
 			t.Errorf("更新选项计数失败: %s", err.Error())
 		}
 	}
@@ -355,29 +356,29 @@ func testInsertTestVoteRecords(t *testing.T) {
 // TestPrintTestData 测试打印测试数据统计
 func TestPrintTestData(t *testing.T) {
 	// 初始化数据库连接
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	t.Log("\n=== 测试数据统计 ===")
 
 	// 统计用户
 	var userCount int64
-	model.Conn.Model(&model.User{}).Count(&userCount)
+	mysql.Conn.Model(&model.User{}).Count(&userCount)
 	t.Logf("用户总数: %d", userCount)
 
 	// 统计投票
 	var voteCount int64
-	model.Conn.Model(&model.Vote{}).Count(&voteCount)
+	mysql.Conn.Model(&model.Vote{}).Count(&voteCount)
 	t.Logf("投票总数: %d", voteCount)
 
 	// 统计投票选项
 	var voteOptCount int64
-	model.Conn.Model(&model.VoteOpt{}).Count(&voteOptCount)
+	mysql.Conn.Model(&model.VoteOpt{}).Count(&voteOptCount)
 	t.Logf("投票选项总数: %d", voteOptCount)
 
 	// 统计投票记录
 	var voteRecordCount int64
-	model.Conn.Model(&model.VoteOptUser{}).Count(&voteRecordCount)
+	mysql.Conn.Model(&model.VoteOptUser{}).Count(&voteRecordCount)
 	t.Logf("投票记录总数: %d", voteRecordCount)
 
 	t.Log("=== 数据统计完成 ===")
@@ -386,14 +387,14 @@ func TestPrintTestData(t *testing.T) {
 // TestDataIntegrity 测试数据完整性
 func TestDataIntegrity(t *testing.T) {
 	// 初始化数据库连接
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	t.Log("开始数据完整性测试...")
 
 	// 检查用户数据完整性
 	var users []model.User
-	if err := model.Conn.Find(&users).Error; err != nil {
+	if err := mysql.Conn.Find(&users).Error; err != nil {
 		t.Fatalf("获取用户数据失败: %s", err)
 	}
 
@@ -411,7 +412,7 @@ func TestDataIntegrity(t *testing.T) {
 
 	// 检查投票数据完整性
 	var votes []model.Vote
-	if err := model.Conn.Find(&votes).Error; err != nil {
+	if err := mysql.Conn.Find(&votes).Error; err != nil {
 		t.Fatalf("获取投票数据失败: %s", err)
 	}
 
@@ -426,7 +427,7 @@ func TestDataIntegrity(t *testing.T) {
 
 	// 检查投票选项数据完整性
 	var voteOpts []model.VoteOpt
-	if err := model.Conn.Find(&voteOpts).Error; err != nil {
+	if err := mysql.Conn.Find(&voteOpts).Error; err != nil {
 		t.Fatalf("获取投票选项数据失败: %s", err)
 	}
 

@@ -48,6 +48,7 @@ type User struct {
 	Uuid        int64     `gorm:"column:uuid;default:NULL"`
 	Name        string    `gorm:"column:name;default:NULL"`
 	Password    string    `gorm:"column:password;default:NULL"`
+	Token       string    `gorm:"column:token;default:NULL"`
 	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`
 	UpdatedTime time.Time `gorm:"column:updated_time;default:NULL"`
 }

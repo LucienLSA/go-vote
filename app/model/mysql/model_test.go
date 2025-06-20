@@ -1,9 +1,8 @@
-package model
+package mysql
 
 import (
-	"context"
 	"fmt"
-	"govote/app/tools/log"
+	"govote/app/model"
 	"testing"
 	"time"
 )
@@ -48,19 +47,9 @@ func TestDoVote(t *testing.T) {
 	Close()
 }
 
-func TestGetHistoryVote(t *testing.T) {
-	log.NewLogger()
-	NewMysql()
-	NewRedis() // 初始化Redis连接
-	//测试用例
-	r, _ := GetVoteUserHistory(context.Background(), 1, 1)
-	fmt.Printf("ret:%+v", r)
-	Close()
-}
-
 func TestAddVote(t *testing.T) {
 	NewMysql()
-	vote := Vote{
+	vote := model.Vote{
 		Title:       "测试用例",
 		Type:        0,
 		Status:      0,
@@ -69,14 +58,14 @@ func TestAddVote(t *testing.T) {
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	}
-	opt := make([]VoteOpt, 0)
-	opt = append(opt, VoteOpt{
+	opt := make([]model.VoteOpt, 0)
+	opt = append(opt, model.VoteOpt{
 		Name:        "测试选项1",
 		Count:       0,
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	})
-	opt = append(opt, VoteOpt{
+	opt = append(opt, model.VoteOpt{
 		Name:        "测试选项2",
 		Count:       0,
 		CreatedTime: time.Now(),

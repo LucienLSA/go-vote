@@ -2,7 +2,7 @@ package schedule
 
 import (
 	"fmt"
-	"govote/app/model"
+	"govote/app/model/mysql"
 	"time"
 )
 
@@ -21,7 +21,7 @@ func EndVote() {
 		case <-t.C:
 			fmt.Println("EndVote启动")
 			// 执行的函数
-			model.EndVote()
+			mysql.EndVote()
 			fmt.Println("EndVote运行完毕")
 		}
 	}

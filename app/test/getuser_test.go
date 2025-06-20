@@ -1,14 +1,14 @@
 package test
 
 import (
-	"govote/app/model"
+	"govote/app/model/mysql"
 	"testing"
 )
 
 func TestGetUserV1(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 测试用例
 	testCases := []struct {
@@ -24,7 +24,7 @@ func TestGetUserV1(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			user, err := model.GetUserV1(tc.username)
+			user, err := mysql.GetUserV1(tc.username)
 
 			if tc.expectFound {
 				// 期望找到用户
@@ -57,8 +57,8 @@ func TestGetUserV1(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 测试用例
 	testCases := []struct {
@@ -74,7 +74,7 @@ func TestGetUser(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			user, err := model.GetUser(tc.username)
+			user, err := mysql.GetUser(tc.username)
 
 			if tc.expectFound {
 				// 期望找到用户
@@ -103,14 +103,14 @@ func TestGetUser(t *testing.T) {
 
 func TestGetUserPerformance(t *testing.T) {
 	// 初始化数据库
-	model.NewMysql()
-	defer model.Close()
+	mysql.NewMysql()
+	defer mysql.Close()
 
 	// 性能测试：多次查询同一用户
 	username := "admin"
 
 	for i := 0; i < 10; i++ {
-		user, err := model.GetUser(username)
+		user, err := mysql.GetUser(username)
 		if err != nil {
 			t.Errorf("第%d次查询失败: %s", i+1, err)
 			continue

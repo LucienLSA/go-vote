@@ -1,7 +1,8 @@
 package app
 
 import (
-	"govote/app/model"
+	"govote/app/model/mysql"
+	"govote/app/model/redis_cache"
 	"govote/app/router"
 	"govote/app/tools/log"
 	"govote/app/tools/uid"
@@ -18,12 +19,12 @@ func Start() {
 	}
 	log.L.Info("雪花算法初始化成功!")
 
-	model.NewMysql()
+	mysql.NewMysql()
 	log.L.Info("MySQL初始化成功!")
-	model.NewRedis()
+	redis_cache.NewRedis()
 	log.L.Info("Redis初始化成功!")
 	defer func() {
-		model.Close()
+		mysql.Close()
 	}()
 	// schedule.Start()
 	router.New()

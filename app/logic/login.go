@@ -1,9 +1,11 @@
 package logic
 
 import (
-	"govote/app/model"
+	"govote/app/model/mysql"
+	"govote/app/model/redis_cache"
 	"govote/app/param"
 	"govote/app/tools/e"
+	"govote/app/tools/jwt"
 	"govote/app/tools/session"
 	"net/http"
 
@@ -47,7 +49,7 @@ func DoLogin(context *gin.Context) {
 		return
 	}
 
-	ret, err := model.GetUser(user.Name)
+	ret, err := mysql.GetUser(user.Name)
 	if err != nil {
 		// 用户不存在或获取失败
 		context.JSON(http.StatusOK, e.UserErr)
@@ -60,7 +62,21 @@ func DoLogin(context *gin.Context) {
 		context.JSON(http.StatusOK, e.UserErr)
 		return
 	}
-	session.SetSessionV1(context, user.Name, ret.Id)
+	// 使用sesstion保存登录的用户和id信息
+	// session.SetSessionV1(context, user.Name, ret.Id)
+	// 使用jwt
+	token, err := jwt.GenToken(ret.Id, user.Name)
+	if err != nil {
+		context.JSON(http.StatusOK, e.ParamErr)
+		return
+	}
+	ret.Token = token
+	// 将token保存到redis中
+	err = redis_cache.StorgeUserIdToken(token, ret.Name)
+	if err != nil {
+		context.JSON(http.StatusOK, e.ParamErr)
+		return
+	}
 	context.JSON(http.StatusOK, e.OK)
 }
 
@@ -91,7 +107,6 @@ func CheckUser(context *gin.Context) {
 // @Router       /logout [post]
 func Logout(context *gin.Context) {
 	session.FlushSessionV1(context)
-
 	// 检查请求的Content-Type，如果是JSON请求则返回JSON响应
 	if context.GetHeader("Content-Type") == "application/json" ||
 		context.Request.Method == "POST" {

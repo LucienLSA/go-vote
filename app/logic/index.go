@@ -1,7 +1,8 @@
 package logic
 
 import (
-	"govote/app/model"
+	"govote/app/model/mysql"
+	"govote/app/model/redis_cache"
 	"govote/app/param"
 	"govote/app/tools/e"
 	"govote/app/tools/session"
@@ -12,12 +13,12 @@ import (
 )
 
 func Index(context *gin.Context) {
-	ret := model.GetVotes()
+	ret := mysql.GetVotes()
 	context.HTML(http.StatusOK, "index.html", gin.H{"vote": ret})
 }
 
 func GetVotes(context *gin.Context) {
-	ret := model.GetVotes()
+	ret := mysql.GetVotes()
 	context.JSON(http.StatusOK, e.ECode{
 		Data: ret,
 	})
@@ -37,7 +38,7 @@ func GetVoteInfo(context *gin.Context) {
 	idStr := context.Query("id")
 	voteData.Id, _ = strconv.ParseInt(idStr, 10, 64)
 	// ret := model.GetVote(voteData.Id)
-	ret := model.GetVoteCache(context, voteData.Id)
+	ret := redis_cache.GetVoteCache(context, voteData.Id)
 	if ret.Vote.Id < 1 {
 		context.JSON(http.StatusNotFound, e.NotFoundErr)
 	}
@@ -70,7 +71,7 @@ func DoVote(context *gin.Context) {
 	voteInfo.VoteID, _ = strconv.ParseInt(voteIdStr, 10, 64)
 
 	//查询是否投过票了
-	voteUser, err := model.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
+	voteUser, err := redis_cache.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
 	if len(voteUser) > 0 || err != nil {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
@@ -82,13 +83,13 @@ func DoVote(context *gin.Context) {
 		voteInfo.Opt = append(voteInfo.Opt, optId)
 	}
 	// 执行投票
-	ok := model.DoVoteV2(voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
+	ok := mysql.DoVoteV2(voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
 	if !ok {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 	// 投票完成删除缓存，设置为过期
-	err = model.CleanVote(context, voteInfo.UserID)
+	err = redis_cache.CleanVote(context, voteInfo.UserID)
 	if err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return

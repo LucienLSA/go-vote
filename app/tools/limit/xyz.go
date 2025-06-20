@@ -3,9 +3,10 @@ package limit
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"govote/app/model"
 	"govote/app/tools/log"
 	"time"
+
+	"govote/app/model/redis_cache"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +31,7 @@ func CheckXYZ(context *gin.Context) bool {
 
 	// 检查是否被限流
 	banKey := "ban-" + hashString
-	banFlag, err := model.Rdb.Get(context, banKey).Bool()
+	banFlag, err := redis_cache.GetRedisClient().Get(context, banKey).Bool()
 	if err == nil && banFlag {
 		log.L.Infof("IP %s 正在被限流", ip)
 		return false
@@ -38,7 +39,7 @@ func CheckXYZ(context *gin.Context) bool {
 
 	// 使用原子操作检查和递增计数器
 	counterKey := "xyz-" + hashString
-	pipe := model.Rdb.Pipeline()
+	pipe := redis_cache.GetRedisClient().Pipeline()
 
 	// 递增计数
 	incrCmd := pipe.Incr(context, counterKey)
@@ -58,7 +59,7 @@ func CheckXYZ(context *gin.Context) bool {
 	// 检查是否超过限制
 	if currentCount > MaxRequests {
 		// 设置限流标记
-		_, err = model.Rdb.SetEx(context, banKey, true, BanDuration*time.Second).Result()
+		_, err = redis_cache.GetRedisClient().SetEx(context, banKey, true, BanDuration*time.Second).Result()
 		if err != nil {
 			log.L.Errorf("设置限流标记失败: %v", err)
 		}
