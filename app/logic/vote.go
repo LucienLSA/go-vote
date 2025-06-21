@@ -105,9 +105,8 @@ func DelVote(context *gin.Context) {
 	var id int64
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
-	// vote := model.GetVote(id)
-	voteInfo := redis_cache.GetVoteCache(context, id)
-	if voteInfo.Vote.Id < 1 {
+	voteInfo, err := redis_cache.GetVoteCache(context, id)
+	if err != nil || voteInfo == nil || voteInfo.Vote.Id < 1 {
 		context.JSON(http.StatusNoContent, e.OK)
 		return
 	}

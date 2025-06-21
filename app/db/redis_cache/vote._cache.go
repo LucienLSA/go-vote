@@ -12,20 +12,18 @@ import (
 )
 
 // 从缓存中获取投票记录
-func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
-	var ret model.VoteWithOpt
-	// 检查Redis连接是否可用
+func GetVoteCache(c context.Context, id int64) (*model.VoteWithOpt, error) {
 	if rdb == nil {
 		log.L.Warn("Redis连接未初始化，直接从数据库查询")
 		vote, err := mysql.GetVoteV5(c, id)
 		if err != nil {
 			log.L.Errorf("获取投票记录详情失败, err:%s\n", err.Error())
-			return ret
+			return nil, err
 		}
 		if vote != nil {
-			ret = *vote
+			return vote, nil
 		}
-		return ret
+		return nil, nil
 	}
 
 	key1 := fmt.Sprintf("key_%d", id)
@@ -34,15 +32,18 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 	log.L.Infof("key::%s\n", fullKey)
 	voteStr, err := rdb.Get(c, fullKey).Result()
 	if err == nil || len(voteStr) > 0 {
-		//存在数据
-		log.L.Info("key存在, 直接返回缓存中的数据")
+		var ret model.VoteWithOpt
 		_ = json.Unmarshal([]byte(voteStr), &ret)
-		return ret
+		if ret.Vote.Id > 0 {
+			return &ret, nil
+		}
+		return nil, nil
 	}
 	// 缓存中不存在，从数据库获取信息
 	vote, err := mysql.GetVoteV5(c, id)
 	if err != nil {
 		log.L.Errorf("获取投票记录详情失败, err:%s\n", err.Error())
+		return nil, err
 	}
 	if vote != nil && vote.Vote.Id > 0 {
 		//写入缓存
@@ -53,9 +54,9 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 		if err1 != nil {
 			log.L.Errorf("写入缓存失败, err:%s\n", err1.Error())
 		}
-		ret = *vote
+		return vote, nil
 	}
-	return ret
+	return nil, nil
 }
 
 func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOptUser, error) {

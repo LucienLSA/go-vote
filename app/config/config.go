@@ -1,15 +1,22 @@
 package config
 
 import (
-	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-var Conf = new(multipleConfig)
+var Conf = &multipleConfig{
+	AppConfig:       &AppConfig{},
+	LogConfig:       &LogConfig{},
+	MySQLConfig:     &MySQLConfig{},
+	RedisConfig:     &RedisConfig{},
+	RateLimitConfig: &RateLimitConfig{},
+}
 
 type multipleConfig struct {
 	*AppConfig       `mapstructure:"app"`
@@ -71,22 +78,26 @@ type RateLimitConfig struct {
 	WindowDuration time.Duration `mapstructure:"window_duration"` // 滑动窗口时间
 }
 
-func InitSettings() (err error) {
-	// viper.SetConfigName("config")
-	// viper.SetConfigType("yaml")
-	// viper.SetConfigFile("./config/config.yaml")
-	// viper.AddConfigPath("./config/")
-	// viper.AddConfigPath("./")
-	// viper.SetConfigFile(filePath)
-	var filePath string
-	flag.StringVar(&filePath, "filePath", "./config/config.yaml", "配置文件")
-	//解析命令行参数
-	flag.Parse()
-	fmt.Println(filePath)
-	fmt.Println(flag.Args())
-	fmt.Println(flag.NArg())
-	fmt.Println(flag.NFlag())
-	viper.SetConfigFile(filePath)
+func InitSettings(filePath ...string) (err error) {
+	var cfgPath string
+	if len(filePath) > 0 && filePath[0] != "" {
+		cfgPath = filePath[0]
+	} else {
+		cfgPath = "./app/config/config.yaml"
+	}
+
+	// Go test 运行时工作目录会变，不能强制检测 go.mod
+	// 只需保证配置文件路径正确即可
+
+	// 转为绝对路径
+	absPath, err := filepath.Abs(cfgPath)
+	if err != nil {
+		fmt.Printf("获取配置文件绝对路径失败: %v\n", err)
+		return
+	}
+	fmt.Println("当前工作目录：", getCwd())
+	fmt.Println("加载配置文件路径：", absPath)
+	viper.SetConfigFile(absPath)
 
 	err = viper.ReadInConfig()
 	if err != nil {
@@ -94,13 +105,6 @@ func InitSettings() (err error) {
 		fmt.Printf("viper.ReadInConfig failed, err:%v\n", err)
 		return
 	}
-
-	// 初始化配置结构体指针
-	Conf.AppConfig = &AppConfig{}
-	Conf.LogConfig = &LogConfig{}
-	Conf.MySQLConfig = &MySQLConfig{}
-	Conf.RedisConfig = &RedisConfig{}
-	Conf.RateLimitConfig = &RateLimitConfig{}
 
 	// 配置信息的反序列化
 	if err := viper.Unmarshal(Conf); err != nil {
@@ -114,4 +118,13 @@ func InitSettings() (err error) {
 		}
 	})
 	return
+}
+
+// 获取当前工作目录
+func getCwd() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "(获取失败)"
+	}
+	return cwd
 }

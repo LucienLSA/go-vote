@@ -30,12 +30,18 @@ func ResultVote(context *gin.Context) {
 	var id int64
 	idStr := context.Query("id")
 	id, _ = strconv.ParseInt(idStr, 10, 64)
-	// ret := model.GetVote(id)
-	ret := redis_cache.GetVoteCache(context, id)
+	ret, err := redis_cache.GetVoteCache(context, id)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, e.ServerErr)
+		return
+	}
+	if ret == nil || ret.Vote.Id < 1 {
+		context.JSON(http.StatusOK, e.NotFoundErr)
+		return
+	}
 	data := ResultData{
 		Title: ret.Vote.Title,
 	}
-
 	for _, v := range ret.Opt {
 		data.Count = data.Count + v.Count
 		tmp := ResultVoteOpt{
@@ -44,7 +50,6 @@ func ResultVote(context *gin.Context) {
 		}
 		data.Opt = append(data.Opt, &tmp)
 	}
-
 	context.JSON(http.StatusOK, e.ECode{
 		Data: data,
 	})

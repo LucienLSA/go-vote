@@ -284,22 +284,25 @@
         });
 
         function loadCaptcha() {
-            $("#captcha_image").html('<div class="loading-spinner"></div>');
+            // 清空旧的 src，浏览器会显示 alt 内容或一个加载图标
+            $("#captcha_image").attr("src", "");
             
             $.ajax({
-                url: "/captcha/generate",
+                url: "/captcha/generate", // 修正回正确的 API 地址
                 type: "GET",
                 dataType: "json",
                 success: function(data) {
-                    if (data.code === 0) {
-                        captchaId = data.data.id;
-                        $("#captcha_image").attr("src", data.data.image);
+                    if (data.code === 0 && data.data) {
+                        // 修正 JSON 键名
+                        captchaId = data.data.captcha_id;
+                        $("#captcha_image").attr("src", data.data.captcha_image);
                     } else {
-                        $("#captcha_image").html('加载失败');
+                        // 加载失败时，alt 文本会自动显示
+                        console.error("加载验证码失败:", data.message);
                     }
                 },
                 error: function() {
-                    $("#captcha_image").html('加载失败');
+                    console.error("加载验证码网络错误");
                 }
             });
         }
@@ -347,7 +350,7 @@
                     password: password,
                     password_2: password2,
                     captcha_id: captchaId,
-                    captcha_code: captchaCode
+                    captcha_code: captchaCode // 修正注册时提交的字段名
                 },
                 type: "post",
                 dataType: "json",
@@ -356,7 +359,7 @@
                         // 注册成功
                         showMessage("注册成功，正在跳转到登录页面...", "success");
                         setTimeout(function() {
-                            window.location.href = "/login";
+                            window.location.href = "/login"; // 修正回 /login
                         }, 2000);
                     } else {
                         // 注册失败

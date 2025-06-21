@@ -5,6 +5,7 @@ import (
 	"govote/app/db/redis_cache"
 	"govote/app/param"
 	"govote/app/tools/e"
+	"govote/app/tools/log"
 	"net/http"
 	"strconv"
 
@@ -36,10 +37,16 @@ func GetVoteInfo(context *gin.Context) {
 	var voteData param.VoteData
 	idStr := context.Query("id")
 	voteData.Id, _ = strconv.ParseInt(idStr, 10, 64)
-	// ret := model.GetVote(voteData.Id)
-	ret := redis_cache.GetVoteCache(context, voteData.Id)
-	if ret.Vote.Id < 1 {
+	ret, err := redis_cache.GetVoteCache(context, voteData.Id)
+	if err != nil {
+		log.L.Warnf("[redis_cache.GetVoteCache] 获取投票缓存失败, err", err)
+		context.JSON(http.StatusInternalServerError, e.ServerErr)
+		return
+	}
+	if ret == nil || ret.Vote.Id < 1 {
+		log.L.Warnf("[GetVoteInfo] 投票资源不存在, id=%d", voteData.Id)
 		context.JSON(http.StatusNotFound, e.NotFoundErr)
+		return
 	}
 	context.JSON(http.StatusOK, e.ECode{
 		Data: ret,
@@ -66,7 +73,7 @@ func DoVote(context *gin.Context) {
 	// JWT上下文获取用户id
 	uid, err := GetLoginUserID(context)
 	if err != nil {
-		context.JSON(http.StatusOK, e.NotLogin) // NotLogin包含了UserNotLogin的错误信息
+		context.JSON(http.StatusUnauthorized, e.NotLogin) // NotLogin包含了UserNotLogin的错误信息
 		return
 	}
 	voteInfo.UserID = uid
@@ -74,11 +81,11 @@ func DoVote(context *gin.Context) {
 	//查询是否投过票了
 	voteUser, err := redis_cache.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
 	if err != nil && err.Error() != "redis: nil" { // 忽略 "redis: nil" 错误，它表示缓存未命中
-		context.JSON(http.StatusOK, e.ServerErr)
+		context.JSON(http.StatusInternalServerError, e.ServerErr)
 		return
 	}
 	if len(voteUser) > 0 {
-		context.JSON(http.StatusOK, e.VoteRepeatErr)
+		context.JSON(http.StatusAlreadyReported, e.VoteRepeatErr)
 		return
 	}
 
