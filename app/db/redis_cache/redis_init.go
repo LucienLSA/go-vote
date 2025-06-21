@@ -2,6 +2,8 @@ package redis_cache
 
 import (
 	"context"
+	"fmt"
+	"govote/app/config"
 	"govote/app/tools/log"
 	"govote/app/tools/session"
 
@@ -14,9 +16,10 @@ var rctx = context.Background()
 
 func NewRedis() {
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     "127.0.0.1:6379",
-		Password: "", // no password set
-		DB:       8,  // use default DB
+		Addr:     fmt.Sprintf("%s:%s", config.Conf.RedisConfig.Host, config.Conf.RedisConfig.Port),
+		Password: config.Conf.RedisConfig.Password,
+		DB:       config.Conf.RedisConfig.DB,
+		PoolSize: config.Conf.RedisConfig.PoolSize,
 	})
 	// 初始化session
 	var err error

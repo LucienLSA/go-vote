@@ -1,0 +1,47 @@
+app:
+  name: "bluebellApp"
+  mode: "dev"
+  port: 8081
+  version: "1.0.0"
+  start_time: "2025-01-01"
+  machine_id: 1
+  jwt_expire_time: 360
+  jwt_secret: "lucien-govote-jwt"
+  jwt_issuer: "lucien"
+  jwt_subject: "go-vote"
+  cache_expire_time: 3600
+  snowflake_epoch: "2024-01-01"
+  schedule_interval: 5
+
+  page_size: 5
+  page_num: 1
+
+log:
+  level: "debug"
+  filepath: "./runtime/logs/"
+  filename: "vote.log"
+  max_size: 200
+  max_age: 30
+  max_backups: 7
+
+mysql:
+  host: "127.0.0.1"
+  port: 3306
+  user: "root"
+  password: "123456"
+  dbname: "vote"
+  max_open_conns: 200
+  max_idle_conns: 50
+
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 6
+  pool_size: 100
+
+rate_limit:
+  max_requests: 5
+  ban_duration: 3
+  window_duration: 5
+

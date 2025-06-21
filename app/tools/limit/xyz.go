@@ -3,18 +3,13 @@ package limit
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"govote/app/config"
 	"govote/app/tools/log"
 	"time"
 
 	"govote/app/db/redis_cache"
 
 	"github.com/gin-gonic/gin"
-)
-
-const (
-	MaxRequests    = 5 // 最大请求次数
-	BanDuration    = 3 // 限流持续时间(秒)
-	WindowDuration = 5 // 滑动窗口时间(秒)
 )
 
 func CheckXYZ(context *gin.Context) bool {
@@ -44,7 +39,7 @@ func CheckXYZ(context *gin.Context) bool {
 	// 递增计数
 	incrCmd := pipe.Incr(context, counterKey)
 	// 设置过期时间（只在第一次设置）
-	pipe.Expire(context, counterKey, WindowDuration*time.Second)
+	pipe.Expire(context, counterKey, config.Conf.RateLimitConfig.WindowDuration*time.Second)
 
 	_, err = pipe.Exec(context)
 	if err != nil {
@@ -57,13 +52,13 @@ func CheckXYZ(context *gin.Context) bool {
 	currentCount := incrCmd.Val()
 
 	// 检查是否超过限制
-	if currentCount > MaxRequests {
+	if currentCount > int64(config.Conf.RateLimitConfig.MaxRequests) {
 		// 设置限流标记
-		_, err = redis_cache.GetRedisClient().SetEx(context, banKey, true, BanDuration*time.Second).Result()
+		_, err = redis_cache.GetRedisClient().SetEx(context, banKey, true, config.Conf.RateLimitConfig.BanDuration*time.Second).Result()
 		if err != nil {
 			log.L.Errorf("设置限流标记失败: %v", err)
 		}
-		log.L.Infof("IP %s 超过限制，已限流 %d 秒", ip, BanDuration)
+		log.L.Infof("IP %s 超过限制，已限流 %v", ip, config.Conf.RateLimitConfig.BanDuration)
 		return false
 	}
 

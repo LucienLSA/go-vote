@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"govote/app/config"
 	"govote/app/db/model"
 	"govote/app/db/mysql"
 	"govote/app/tools/log"
@@ -48,7 +49,7 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 		s, _ := json.Marshal(&vote)
 		// 加入前缀key
 		key := GetRedisKey(KeyVoteSetPrefix)
-		err1 := rdb.Set(c, key+key1, s, 3600*time.Second).Err()
+		err1 := rdb.Set(c, key+key1, s, config.Conf.AppConfig.CacheExpireTime*time.Second).Err()
 		if err1 != nil {
 			log.L.Errorf("写入缓存失败, err:%s\n", err1.Error())
 		}
@@ -91,7 +92,7 @@ func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOp
 	// 查到数据库
 	if len(ret) > 0 {
 		s, _ := json.Marshal(ret)
-		err := rdb.Set(c, fullKey, s, 3600*time.Second).Err()
+		err := rdb.Set(c, fullKey, s, config.Conf.AppConfig.CacheExpireTime*time.Second).Err()
 		if err != nil {
 			log.L.Errorf("设置缓存失败, err:%s\n", err.Error())
 			return nil, err

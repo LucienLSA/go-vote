@@ -2,12 +2,11 @@ package jwt
 
 import (
 	"errors"
+	"govote/app/config"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
-
-var MySecret = []byte("lucien-govote-jwt")
 
 // CustomClaims 自定义声明类型 并内嵌jwt.RegisteredClaims
 // jwt包自带的jwt.RegisteredClaims只包含了官方字段
@@ -22,21 +21,21 @@ type MyClaims struct {
 // GenToken 生成JWT
 func GenToken(id int64, name string) (string, error) {
 	nowTime := time.Now()
-	expireTime := nowTime.Add(5 * time.Hour)
+	expireTime := nowTime.Add(config.Conf.AppConfig.JwtExpireTime * time.Hour)
 	// 创建一个自己的声明数据
 	claims := MyClaims{
 		Id:   id,
 		Name: name, // 自定义字段
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
-			Issuer:    "lucien",  // 签发人
-			Subject:   "go-vote", // 签发对象
+			Issuer:    config.Conf.AppConfig.JwtIssuer,  // 签发人
+			Subject:   config.Conf.AppConfig.JwtSubject, // 签发对象
 		},
 	}
 	// 使用指定的签名方法创建签名对象
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// 使用指定的secret签名并获得完整的编码后的字符串token
-	token, err := tokenClaims.SignedString(MySecret)
+	token, err := tokenClaims.SignedString([]byte(config.Conf.AppConfig.JwtSecret))
 	return token, err
 }
 
@@ -48,7 +47,7 @@ func ParseToken(tokenString string) (myclaims *MyClaims, err error) {
 	tokenClaims, err := jwt.ParseWithClaims(tokenString, myclaims, func(token *jwt.Token) (i interface{}, err error) {
 		// 直接使用标准的Claim则可以直接使用Parse方法
 		//token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
-		return MySecret, nil
+		return []byte(config.Conf.AppConfig.JwtSecret), nil
 	})
 	if tokenClaims != nil {
 		// 对token对象中的Claim进行类型断言
