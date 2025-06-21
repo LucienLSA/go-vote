@@ -93,13 +93,19 @@ func DoLogin(context *gin.Context) {
 // @Success      200  {object}  e.ECode
 // @Router       /logout [post]
 func Logout(context *gin.Context) {
+	// 清理 session
 	session.FlushSessionV1(context)
-	// 检查请求的Content-Type，如果是JSON请求则返回JSON响应
-	if context.GetHeader("Content-Type") == "application/json" ||
-		context.Request.Method == "POST" {
-		context.JSON(http.StatusOK, e.OK)
-	} else {
-		// 否则重定向到登录页面
-		context.Redirect(http.StatusFound, "/login")
+
+	// 清理 Redis 里的 token
+	token := context.GetHeader("Authorization")
+	if token != "" {
+		_ = redis_cache.DeleteUserIdToken(token) // 忽略错误
 	}
+
+	// 统一返回 JSON 响应
+	context.JSON(http.StatusOK, e.ECode{
+		Code:    0,
+		Message: "退出登录成功",
+		Data:    nil,
+	})
 }

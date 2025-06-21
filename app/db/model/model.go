@@ -30,8 +30,8 @@ func (v *VoteOpt) TableName() string {
 type Vote struct {
 	Id          int64     `gorm:"column:id;primary_key;AUTO_INCREMENT;NOT NULL"`
 	Title       string    `gorm:"column:title;default:NULL"`
-	Type        int32     `gorm:"column:type;default:NULL;comment:'0单选1多选'"`
-	Status      int32     `gorm:"column:status;default:NULL;comment:'0正常1超时'"`
+	Type        int32     `gorm:"column:type;default:0;comment:'0单选1多选'"`
+	Status      int32     `gorm:"column:status;default:0;comment:'0正常1超时'"`
 	Time        int64     `gorm:"column:time;default:NULL;comment:'有效时长'"`
 	UserId      int64     `gorm:"column:user_id;default:NULL;comment:'创建人'"`
 	CreatedTime time.Time `gorm:"column:created_time;default:NULL"`

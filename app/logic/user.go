@@ -57,21 +57,22 @@ func CreateUser(context *gin.Context) {
 		context.JSON(http.StatusOK, e.PasswordErr)
 		return
 	}
-	eUser, exist, err := mysql.CheckUserExist(context, user.Name)
+	// 检查用户是否存在
+	_, exist, err := mysql.CheckUserExist(context, user.Name)
 	if err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 	if exist {
 		// 用户存在
-		context.JSON(http.StatusNotFound, e.UserExistsErr)
+		context.JSON(http.StatusOK, e.UserExistsErr)
 		return
 	}
-	// 构建结构体
+	// 构建结构体，注意：应使用来自请求参数 user 的数据
 	userInfo := &model.User{
-		Id:          uid.GenSnowID(),
-		Name:        eUser.Name,
-		Password:    auth.EncryptV2(eUser.Password),
+		Uuid:        uid.GenSnowID(),
+		Name:        user.Name,
+		Password:    auth.EncryptV2(user.Password),
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	}
@@ -79,6 +80,7 @@ func CreateUser(context *gin.Context) {
 	err = mysql.CreateUser(context, userInfo)
 	if err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
+		return
 	}
 	context.JSON(http.StatusOK, e.OK)
 }

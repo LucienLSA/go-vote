@@ -4,7 +4,7 @@ package redis_cache
 // 冒号分割命名空间 使用其区分不同的key
 const (
 	Prefix                  = "voteInfo:"
-	KeyUserIDTokenSetPrefix = "user:" // set; 保存登录用户及token
+	KeyUserIDTokenSetPrefix = "token:" // set; 保存登录用户及token
 	KeyVoteSetPrefix        = "vote:"
 )
 

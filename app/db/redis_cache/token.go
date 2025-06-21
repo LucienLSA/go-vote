@@ -34,3 +34,22 @@ func GetJwtToken(username string) (token string, err error) {
 	}
 	return
 }
+
+// 删除用户token
+func DeleteUserIdToken(token string) error {
+	// 由于存储时是以 username 为 key，token 为 value，需要遍历所有 user key 找到对应的 token 并删除
+	// 这里假设用户量不大，可以全量遍历
+	pattern := GetRedisKey(KeyUserIDTokenSetPrefix) + "*"
+	iter := rdb.Scan(rctx, 0, pattern, 0).Iterator()
+	for iter.Next(rctx) {
+		key := iter.Val()
+		val, err := rdb.Get(rctx, key).Result()
+		if err == nil && val == token {
+			return rdb.Del(rctx, key).Err()
+		}
+	}
+	if err := iter.Err(); err != nil {
+		return err
+	}
+	return nil
+}
