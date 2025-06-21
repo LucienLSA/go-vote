@@ -7,7 +7,7 @@ type VoteData struct {
 
 // 投票信息 参数
 type VoteInfoData struct {
-	UserID int64   `json:"id" form:"id"`
+	UserID int64   `json:"user_id" form:"user_id"`
 	VoteID int64   `json:"vote_id" form:"vote_id"`
-	Opt    []int64 `json:"opt[]" form:"opt[]"`
+	OptIDs []int64 `json:"opt_id" form:"opt_id"`
 }

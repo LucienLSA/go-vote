@@ -57,55 +57,46 @@ func GetVoteInfo(context *gin.Context) {
 // @Router       /vote [post]
 func DoVote(context *gin.Context) {
 	var voteInfo param.VoteInfoData
-	// 使用session机制获取用户ID
-	// values := session.GetSessionV1(context)
-	// var userID int64
-	// if v, ok := values["id"]; ok {
-	// 	userID = v.(int64)
-	// }
+	// 绑定 JSON 数据
+	if err := context.ShouldBindJSON(&voteInfo); err != nil {
+		context.JSON(http.StatusBadRequest, e.ParamErr)
+		return
+	}
 
 	// JWT上下文获取用户id
 	uid, err := GetLoginUserID(context)
 	if err != nil {
-		if err == e.ErrorUserNotLogin {
-			context.JSON(http.StatusOK, e.NotLogin)
-			return
-		} else {
-			context.JSON(http.StatusOK, e.ServerErr)
-		}
+		context.JSON(http.StatusOK, e.NotLogin) // NotLogin包含了UserNotLogin的错误信息
+		return
 	}
-	voteIdStr, _ := context.GetPostForm("vote_id")
-	optStr, _ := context.GetPostFormArray("opt[]")
 	voteInfo.UserID = uid
-	voteInfo.VoteID, _ = strconv.ParseInt(voteIdStr, 10, 64)
 
 	//查询是否投过票了
 	voteUser, err := redis_cache.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
-	if len(voteUser) > 0 || err != nil {
+	if err != nil && err.Error() != "redis: nil" { // 忽略 "redis: nil" 错误，它表示缓存未命中
+		context.JSON(http.StatusOK, e.ServerErr)
+		return
+	}
+	if len(voteUser) > 0 {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
 	}
 
-	voteInfo.Opt = make([]int64, 0)
-	for _, v := range optStr {
-		optId, _ := strconv.ParseInt(v, 10, 64)
-		voteInfo.Opt = append(voteInfo.Opt, optId)
-	}
 	// 执行投票
-	ok := mysql.DoVoteV2(context, voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
+	ok := mysql.DoVoteV2(context, voteInfo.UserID, voteInfo.VoteID, voteInfo.OptIDs)
 	if !ok {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 	// 投票完成删除缓存，设置为过期
-	err = redis_cache.CleanVote(context, voteInfo.UserID)
+	err = redis_cache.CleanVote(context, voteInfo.VoteID) // 清理投票详情缓存
 	if err != nil {
-		context.JSON(http.StatusOK, e.ServerErr)
-		return
+		// 此处错误可以只记录日志，不一定需要返回给用户
+		// log.L.Errorf("清理投票缓存失败: %v", err)
 	}
 
 	context.JSON(http.StatusOK, e.ECode{
-		Code:    0,
+		Code:    e.OK.Code,
 		Message: "投票成功",
 	})
 }

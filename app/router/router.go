@@ -38,6 +38,7 @@ func New() {
 	// 改为RestFul风格接口
 	index := r.Group("")
 	// index.Use(logic.CheckUser)
+	index.GET("/index", logic.Index) //静态页面
 	index.Use(middlewares.JWTAuthMiddleware())
 	{
 		//获取投票信息
@@ -45,7 +46,6 @@ func New() {
 		// 	s := model.GetVoteCache(ctx, 3)
 		// 	fmt.Printf("redis:%+v\n", s)
 		// })
-		index.GET("/index", logic.Index) //静态页面
 		index.GET("/votes", logic.GetVotes)
 		index.GET("/vote", logic.GetVoteInfo)
 		// 投票

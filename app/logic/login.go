@@ -77,7 +77,11 @@ func DoLogin(context *gin.Context) {
 		context.JSON(http.StatusOK, e.ParamErr)
 		return
 	}
-	context.JSON(http.StatusOK, e.OK)
+	context.JSON(http.StatusOK, e.ECode{
+		Code:    0,
+		Message: "登录成功",
+		Data:    token,
+	})
 }
 
 // Logout godoc

@@ -348,16 +348,43 @@
     </div>
 
     <script>
+        // 封装带token的fetch方法
+        function authFetch(url, options = {}) {
+            const token = localStorage.getItem('token');
+            options.headers = options.headers || {};
+            if (token) {
+                options.headers['Authorization'] = 'Bearer ' + token;
+            }
+            
+            // 确保Content-Type，如果body是对象的话
+            if (options.body && typeof options.body === 'object') {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(options.body);
+            }
+
+            return fetch(url, options).then(res => {
+                if (!res.ok) {
+                    // 如果HTTP状态码不是2xx，则抛出错误
+                    return res.json().then(errData => Promise.reject(errData));
+                }
+                // 检查content-type，避免json()解析非json内容报错
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return res.json();
+                } else {
+                    return Promise.resolve(); // or res.text() if you expect text
+                }
+            });
+        }
+
         $(document).ready(function(){
             loadData();
             
-            // 当点击投票项时触发AJAX请求
+            // 当点击投票项时触发
             $('body').on('click', '.vote-item', function(event) {
                 event.preventDefault();
                 const voteId = $(this).data('id');
                 loadVoteDetail(voteId);
-                
-                // 更新选中状态
                 $('.vote-item').removeClass('selected');
                 $(this).addClass('selected');
             });
@@ -366,38 +393,65 @@
             $('#logout-btn').on('click', function(e) {
                 e.preventDefault();
                 if (confirm('确定要退出登录吗？')) {
-                    $.ajax({
-                        url: "/logout",
-                        type: "POST",
-                        dataType: "json",
-                        success: function(data) {
+                    authFetch("/logout", { method: "POST" })
+                        .then(data => {
                             if (data.code === 0) {
+                                localStorage.removeItem('token'); // 清除token
                                 window.location.href = "/login";
                             } else {
                                 alert(data.message || "退出失败");
                             }
-                        },
-                        error: function() {
-                            alert("退出失败，请重试");
-                        }
-                    });
+                        })
+                        .catch(() => alert("退出失败，请重试"));
                 }
+            });
+
+            // 投票表单提交
+            $('body').on('submit', '.vote-form', function(e) {
+                e.preventDefault();
+                const $form = $(this);
+                const voteId = $form.find('input[name="vote_id"]').val();
+                
+                // 获取选中的选项
+                const selectedOpts = $form.find('input[name^="opt"]:checked').map(function() {
+                    return $(this).val();
+                }).get();
+
+                if (selectedOpts.length === 0) {
+                    alert("请至少选择一个选项！");
+                    return;
+                }
+                
+                const body = {
+                    vote_id: parseInt(voteId, 10),
+                    opt_id: selectedOpts.map(id => parseInt(id, 10))
+                };
+                
+                $form.find('.submit-btn').prop('disabled', true).text('提交中...');
+
+                authFetch("/vote", {
+                    method: 'POST',
+                    body: body
+                })
+                .then(data => {
+                    alert(data.message || "投票成功！");
+                    loadVoteDetail(voteId); // 重新加载详情
+                })
+                .catch(err => {
+                    alert(err.message || "投票失败，请重试");
+                    $form.find('.submit-btn').prop('disabled', false).text('提交投票');
+                });
             });
         });
 
         function loadData() {
-            $.ajax({
-                url: "/votes",
-                type: "get",
-                dataType: "json",
-                success: function(data) {
+            authFetch("/votes", { method: "GET" })
+                .then(data => {
                     $("#vote_table").empty();
-                    
                     if (data.data && data.data.length > 0) {
                         data.data.forEach(function(vote) {
                             const statusClass = vote.Status === 1 ? 'active' : 'inactive';
                             const statusText = vote.Status === 1 ? '进行中' : '已结束';
-                            
                             const voteHtml = `
                                 <div class="vote-item" data-id="${vote.Id}">
                                     <h3>${vote.Title}</h3>
@@ -407,39 +461,19 @@
                             $("#vote_table").append(voteHtml);
                         });
                     } else {
-                        $("#vote_table").html(`
-                            <div class="empty-state">
-                                <h3>暂无投票</h3>
-                                <p>当前没有可用的投票</p>
-                            </div>
-                        `);
+                        $("#vote_table").html(`<div class="empty-state"><h3>暂无投票</h3><p>当前没有可用的投票</p></div>`);
                     }
-                },
-                error: function() {
-                    $("#vote_table").html(`
-                        <div class="empty-state">
-                            <h3>加载失败</h3>
-                            <p>无法加载投票列表，请刷新页面重试</p>
-                        </div>
-                    `);
-                }
-            });
+                })
+                .catch(() => {
+                    $("#vote_table").html(`<div class="empty-state"><h3>加载失败</h3><p>无法加载投票列表，请刷新页面重试</p></div>`);
+                });
         }
 
         function loadVoteDetail(voteId) {
-            $("#vote_info").html(`
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>加载中...</p>
-                </div>
-            `);
-
-            $.ajax({
-                url: "/vote",
-                type: "GET",
-                data: { id: voteId },
-                dataType: "json",
-                success: function(data) {
+            $("#vote_info").html(`<div class="loading"><div class="spinner"></div><p>加载中...</p></div>`);
+            
+            authFetch(`/vote?id=${voteId}`, { method: "GET" })
+                .then(data => {
                     const vote = data.data.Vote;
                     const options = data.data.Opt;
                     
@@ -508,16 +542,10 @@
                     }
 
                     $("#vote_info").html(voteHtml);
-                },
-                error: function(xhr) {
-                    $("#vote_info").html(`
-                        <div class="empty-state">
-                            <h3>加载失败</h3>
-                            <p>无法加载投票详情，请重试</p>
-                        </div>
-                    `);
-                }
-            });
+                })
+                .catch(() => {
+                    $("#vote_info").html(`<div class="empty-state"><h3>加载失败</h3><p>无法加载投票详情，请重试</p></div>`);
+                });
         }
     </script>
 </body>

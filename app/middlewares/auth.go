@@ -22,6 +22,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// 客户端携带Token有三种方式 1.放在请求头 2.放在请求体 3.放在URI
 		// 这里假设Token放在请求头Header的Authorization中，并使用Bearer开头
 		// 这里的具体实现方式要依据你的实际业务情况决定
+		// 检查 Authorization 是否存在
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
 			log.L.Errorf("Request.Header.Get Authorization failed, err:%s\n", errors.New("请求头中auth为空"))
@@ -31,7 +32,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
-		// 按空格分割
+		// 按空格分割 检查格式是否为 Bearer <token>
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
 			log.L.Errorf("Request.Header.Get Authorization failed, err:%s\n", errors.New("请求头中auth格式有误"))
@@ -43,6 +44,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		}
 		// parts[1]是获取到的tokenString，我们使用之前定义好的解析JWT的函数来解析它
 		mc, err := jwt.ParseToken(parts[1])
+		// 校验 token 合法性
 		if err != nil {
 			// zap.L().Error("jwt.ParseToken failed", zap.Error(errors.New("无效的Token")))
 			log.L.Errorf("Request.Header.Get Authorization failed, err:%s\n", errors.New("请求头中auth格式有误"))
@@ -52,6 +54,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			return
 		}
 		// 从redis中获取token 并比较判断当前登录解析得到的token
+		// 校验 token 是否与 redis 中一致
 		token, err := redis_cache.GetJwtToken(mc.Name)
 		// token不存在 需要重新登录
 		if err == e.ErrNotExistToken {
