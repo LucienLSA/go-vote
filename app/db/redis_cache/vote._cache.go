@@ -27,9 +27,11 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 		return ret
 	}
 
-	key := fmt.Sprintf("key_%d", id)
-	log.L.Infof("key::%s\n", key)
-	voteStr, err := rdb.Get(c, key).Result()
+	key1 := fmt.Sprintf("key_%d", id)
+	// 使用前缀构建完整的Redis key
+	fullKey := GetRedisKey(KeyVoteSetPrefix) + key1
+	log.L.Infof("key::%s\n", fullKey)
+	voteStr, err := rdb.Get(c, fullKey).Result()
 	if err == nil || len(voteStr) > 0 {
 		//存在数据
 		log.L.Info("key存在, 直接返回缓存中的数据")
@@ -44,7 +46,9 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 	if vote != nil && vote.Vote.Id > 0 {
 		//写入缓存
 		s, _ := json.Marshal(&vote)
-		err1 := rdb.Set(c, key, s, 3600*time.Second).Err()
+		// 加入前缀key
+		key := GetRedisKey(KeyVoteSetPrefix)
+		err1 := rdb.Set(c, key+key1, s, 3600*time.Second).Err()
 		if err1 != nil {
 			log.L.Errorf("写入缓存失败, err:%s\n", err1.Error())
 		}
@@ -68,7 +72,9 @@ func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOp
 
 	//先查询缓存
 	k := fmt.Sprintf("vote-user-%d-%d", userId, voteId)
-	str, _ := rdb.Get(c, k).Result()
+	// 使用前缀构建完整的Redis key
+	fullKey := GetRedisKey(KeyVoteSetPrefix) + k
+	str, _ := rdb.Get(c, fullKey).Result()
 	fmt.Printf("str:%s\n", str)
 	if len(str) > 0 {
 		//将数据转化为struct
@@ -85,7 +91,7 @@ func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOp
 	// 查到数据库
 	if len(ret) > 0 {
 		s, _ := json.Marshal(ret)
-		err := rdb.Set(c, k, s, 3600*time.Second).Err()
+		err := rdb.Set(c, fullKey, s, 3600*time.Second).Err()
 		if err != nil {
 			log.L.Errorf("设置缓存失败, err:%s\n", err.Error())
 			return nil, err
@@ -101,7 +107,10 @@ func CleanVote(c context.Context, voteid int64) error {
 		return nil
 	}
 
-	err := rdb.Set(c, fmt.Sprintf("key_vote_%d", voteid), "", 0).Err()
+	// 使用前缀构建完整的Redis key
+	key := fmt.Sprintf("key_%d", voteid)
+	fullKey := GetRedisKey(KeyVoteSetPrefix) + key
+	err := rdb.Set(c, fullKey, "", 0).Err()
 	if err != nil {
 		log.L.Errorf("删除缓存失败, err:%s\n", err)
 		return err
