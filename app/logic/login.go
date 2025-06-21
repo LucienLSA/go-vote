@@ -1,8 +1,8 @@
 package logic
 
 import (
-	"govote/app/model/mysql"
-	"govote/app/model/redis_cache"
+	"govote/app/db/mysql"
+	"govote/app/db/redis_cache"
 	"govote/app/param"
 	"govote/app/tools/e"
 	"govote/app/tools/jwt"
@@ -49,7 +49,7 @@ func DoLogin(context *gin.Context) {
 		return
 	}
 
-	ret, err := mysql.GetUser(user.Name)
+	ret, err := mysql.GetUser(context, user.Name)
 	if err != nil {
 		// 用户不存在或获取失败
 		context.JSON(http.StatusOK, e.UserErr)
@@ -78,23 +78,6 @@ func DoLogin(context *gin.Context) {
 		return
 	}
 	context.JSON(http.StatusOK, e.OK)
-}
-
-func CheckUser(context *gin.Context) {
-	var name string
-	var id int64
-	values := session.GetSessionV1(context)
-	if v, ok := values["name"]; ok {
-		name = v.(string)
-	}
-	if v, ok := values["id"]; ok {
-		id = v.(int64)
-	}
-	if name == "" || id < 0 {
-		context.JSON(http.StatusUnauthorized, e.NotLogin)
-		context.Abort()
-	}
-	context.Next()
 }
 
 // Logout godoc

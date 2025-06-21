@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"context"
-	"govote/app/model"
+	"govote/app/db/model"
 	"govote/app/tools/log"
 	"sync"
 	"time"
@@ -10,9 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetVotes() []model.Vote {
+func GetVotes(ctx context.Context) []model.Vote {
 	ret := make([]model.Vote, 0)
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	if err := db.Table("vote").Find(&ret).Error; err != nil {
 		log.L.Errorf("查询投票失败, err:%s\n", err)
@@ -30,9 +29,8 @@ func GetVotes() []model.Vote {
 // 	return ret
 // }
 
-func GetVote(id int64) model.VoteWithOpt {
+func GetVote(ctx context.Context, id int64) model.VoteWithOpt {
 	var ret model.Vote
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	if err := db.Table("vote").Where("id = ?", id).First(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
@@ -55,7 +53,6 @@ func GetVote(id int64) model.VoteWithOpt {
 // 	if err := db.Raw(`select * from vote where id = ?`, id).Scan(&ret).Error; err != nil {
 // 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 // 	}
-
 // 	opt := make([]model.VoteOpt, 0)
 // 	if err := db.Raw(`select * from vote_opt where vote_id = ?`, id).Scan(&opt).Error; err != nil {
 // 		log.L.Errorf("查询投票选项失败, err:%s\n", err)
@@ -134,9 +131,8 @@ func GetVote(id int64) model.VoteWithOpt {
 // }
 
 // waitGroup
-func GetVoteV5(id int64) (*model.VoteWithOpt, error) {
+func GetVoteV5(ctx context.Context, id int64) (*model.VoteWithOpt, error) {
 	var ret model.Vote
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -161,9 +157,8 @@ func GetVoteV5(id int64) (*model.VoteWithOpt, error) {
 	}, nil
 }
 
-func GetVoteByName(name string) *model.Vote {
+func GetVoteByName(ctx context.Context, name string) *model.Vote {
 	var ret model.Vote
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	if err := db.Raw(`select * from vote where title = ?`, name).Scan(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
@@ -211,7 +206,6 @@ func GetVoteByName(name string) *model.Vote {
 // 	}
 // 	return true
 // }
-
 // // DoVoteV1 匿名函数形式
 // func DoVoteV1(userId, voteId int64, optIDs []int64) bool {
 // 	ctx := context.Background()
@@ -222,7 +216,6 @@ func GetVoteByName(name string) *model.Vote {
 // 			log.L.Errorf("查询投票记录失败, err:%s\n", err)
 // 			return err //只要返回了err GORM会直接回滚，不会提交
 // 		}
-
 // 		for _, value := range optIDs {
 // 			if err := tx.Table("vote_opt").Where("id = ?", value).Update("count", gorm.Expr("count + ?", 1)).Error; err != nil {
 // 				log.L.Errorf("更新投票选项失败, err:%s\n", err)
@@ -246,8 +239,7 @@ func GetVoteByName(name string) *model.Vote {
 // }
 
 // 添加事务检验重复投票
-func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
-	ctx := context.Background()
+func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) bool {
 	db := NewDBClient(ctx)
 	tx := db.Begin()
 	defer func() {
@@ -255,14 +247,12 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 			tx.Rollback()
 		}
 	}()
-
 	var ret model.Vote
 	if err := tx.Table("vote").Where("id = ?", voteId).First(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 		tx.Rollback()
 		return false
 	}
-
 	//检查是否投过票
 	var oldUser model.VoteOptUser
 	if err := tx.Table("vote_opt_user").Where("user_id = ? and vote_id = ?", userId, voteId).First(&oldUser).Error; err != nil {
@@ -278,7 +268,6 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 		tx.Rollback()
 		return false
 	}
-
 	for _, value := range optIDs {
 		if err := tx.Table("vote_opt").Where("id = ?", value).Update("count", gorm.Expr("count + ?", 1)).Error; err != nil {
 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
@@ -316,14 +305,12 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 // 			tx.Rollback()
 // 		}
 // 	}()
-
 // 	var ret model.Vote
 // 	if err := tx.Raw(`select * from vote where id = ?`, voteId).Scan(&ret).Error; err != nil {
 // 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 // 		tx.Rollback()
 // 		return false
 // 	}
-
 // 	//检查是否投过票
 // 	var oldUser model.VoteOptUser
 // 	if err := tx.Raw(`select * from vote_opt_user where user_id = ? and vote_id = ? `, userId, voteId).Scan(&oldUser).Error; err != nil {
@@ -339,7 +326,6 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 // 		tx.Rollback()
 // 		return false
 // 	}
-
 // 	for _, value := range optIDs {
 // 		if err := tx.Exec(`update vote_opt set count = count + 1 where id = ? limit 1`, value).Error; err != nil {
 // 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
@@ -368,7 +354,6 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 // 			return false
 // 		}
 // 	}
-
 // 	if err := tx.Commit().Error; err != nil {
 // 		log.L.Errorf("提交事务失败, err:%s\n", err)
 // 		return false
@@ -376,9 +361,8 @@ func DoVoteV2(userId, voteId int64, optIDs []int64) bool {
 // 	return true
 // }
 
-func GetVoteUser(userId, voteId int64) ([]model.VoteOptUser, error) {
+func GetVoteUser(ctx context.Context, userId, voteId int64) ([]model.VoteOptUser, error) {
 	//检查是否投过票
-	ctx := context.Background()
 	db := NewDBClient(ctx)
 	ret := make([]model.VoteOptUser, 0)
 	if err := db.Raw(`select * from vote_opt_user where user_id = ? and vote_id = ?`, userId, voteId).Scan(&ret).Error; err != nil {
@@ -388,8 +372,7 @@ func GetVoteUser(userId, voteId int64) ([]model.VoteOptUser, error) {
 	return ret, nil
 }
 
-func AddVote(vote model.Vote, opt []model.VoteOpt) error {
-	ctx := context.Background()
+func AddVote(ctx context.Context, vote model.Vote, opt []model.VoteOpt) error {
 	db := NewDBClient(ctx)
 	err := db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&vote).Error; err != nil {
@@ -408,8 +391,7 @@ func AddVote(vote model.Vote, opt []model.VoteOpt) error {
 	return err
 }
 
-func UpdateVote(vote model.Vote, opt []model.VoteOpt) error {
-	ctx := context.Background()
+func UpdateVote(ctx context.Context, vote model.Vote, opt []model.VoteOpt) error {
 	db := NewDBClient(ctx)
 	err := db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&vote).Error; err != nil {
@@ -427,8 +409,7 @@ func UpdateVote(vote model.Vote, opt []model.VoteOpt) error {
 	return err
 }
 
-func DelVote(id int64) bool {
-	ctx := context.Background()
+func DelVote(ctx context.Context, id int64) bool {
 	db := NewDBClient(ctx)
 	if err := db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&model.Vote{}, id).Error; err != nil {
@@ -483,8 +464,7 @@ func DelVote(id int64) bool {
 // 	return true
 // }
 
-func EndVote() {
-	ctx := context.Background()
+func EndVote(ctx context.Context) {
 	db := NewDBClient(ctx)
 	votes := make([]model.Vote, 0)
 	// 查询当前投票记录的状态为1的记录

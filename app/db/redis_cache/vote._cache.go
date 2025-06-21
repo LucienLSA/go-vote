@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"govote/app/model"
-	"govote/app/model/mysql"
+	"govote/app/db/model"
+	"govote/app/db/mysql"
 	"govote/app/tools/log"
 	"time"
 )
@@ -13,11 +13,10 @@ import (
 // 从缓存中获取投票记录
 func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 	var ret model.VoteWithOpt
-
 	// 检查Redis连接是否可用
 	if rdb == nil {
 		log.L.Warn("Redis连接未初始化，直接从数据库查询")
-		vote, err := mysql.GetVoteV5(id)
+		vote, err := mysql.GetVoteV5(c, id)
 		if err != nil {
 			log.L.Errorf("获取投票记录详情失败, err:%s\n", err.Error())
 			return ret
@@ -38,7 +37,7 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 		return ret
 	}
 	// 缓存中不存在，从数据库获取信息
-	vote, err := mysql.GetVoteV5(id)
+	vote, err := mysql.GetVoteV5(c, id)
 	if err != nil {
 		log.L.Errorf("获取投票记录详情失败, err:%s\n", err.Error())
 	}
@@ -56,11 +55,10 @@ func GetVoteCache(c context.Context, id int64) model.VoteWithOpt {
 
 func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOptUser, error) {
 	ret := make([]model.VoteOptUser, 0)
-
 	// 检查Redis连接是否可用
 	if rdb == nil {
 		log.L.Warn("Redis连接未初始化，直接从数据库查询")
-		ret, err := mysql.GetVoteUser(userId, voteId)
+		ret, err := mysql.GetVoteUser(c, userId, voteId)
 		if err != nil {
 			log.L.Errorf("获取投票用户历史失败, err:%s\n", err.Error())
 			return nil, err
@@ -78,7 +76,7 @@ func GetVoteUserHistory(c context.Context, userId, voteId int64) ([]model.VoteOp
 		return ret, nil
 	}
 	//不存在就先查数据库再封装缓存
-	ret, err := mysql.GetVoteUser(userId, voteId)
+	ret, err := mysql.GetVoteUser(c, userId, voteId)
 	if err != nil {
 		log.L.Errorf("获取投票用户历史失败, err:%s\n", err.Error())
 		return nil, err

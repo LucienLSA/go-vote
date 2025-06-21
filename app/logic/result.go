@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"govote/app/model/redis_cache"
+	"govote/app/db/redis_cache"
 	"govote/app/tools/e"
 	"net/http"
 	"strconv"

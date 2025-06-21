@@ -2,10 +2,11 @@ package middlewares
 
 import (
 	"errors"
-	"govote/app/model/redis_cache"
+	"govote/app/db/redis_cache"
 	"govote/app/tools/e"
 	"govote/app/tools/jwt"
 	"govote/app/tools/log"
+	"govote/app/tools/session"
 
 	"net/http"
 	"strings"
@@ -53,7 +54,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// 从redis中获取token 并比较判断当前登录解析得到的token
 		token, err := redis_cache.GetJwtToken(mc.Name)
 		// token不存在 需要重新登录
-		if err == redis_cache.ErrNotExistToken {
+		if err == e.ErrNotExistToken {
 			c.JSON(http.StatusOK, e.NotLogin)
 			// e.ResponseError(c, e.CodeNeedLogin)
 			c.Abort()
@@ -72,4 +73,22 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// ctl.InitUserInfo(c.Request.Context())
 		c.Next() // 后续的处理请求的函数中 可以用c.Get(CtxtUserIDKey)来获取当前请求的用户信息
 	}
+}
+
+// session 验证用户登录
+func CheckUser(context *gin.Context) {
+	var name string
+	var id int64
+	values := session.GetSessionV1(context)
+	if v, ok := values["name"]; ok {
+		name = v.(string)
+	}
+	if v, ok := values["id"]; ok {
+		id = v.(int64)
+	}
+	if name == "" || id < 0 {
+		context.JSON(http.StatusUnauthorized, e.NotLogin)
+		context.Abort()
+	}
+	context.Next()
 }

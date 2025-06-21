@@ -3,7 +3,7 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"govote/app/model"
+	"govote/app/db/model"
 	"govote/app/tools/log"
 
 	"gorm.io/driver/mysql"

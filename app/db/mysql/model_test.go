@@ -1,16 +1,19 @@
 package mysql
 
 import (
+	"context"
 	"fmt"
-	"govote/app/model"
+	"govote/app/db/model"
 	"testing"
 	"time"
 )
 
+var ctx context.Context
+
 func TestGetVotes(t *testing.T) {
 	NewMysql()
 	//测试用例
-	r := GetVotes()
+	r := GetVotes(ctx)
 	fmt.Printf("ret:%+v", r)
 	Close()
 }
@@ -18,7 +21,7 @@ func TestGetVotes(t *testing.T) {
 func TestGetVote(t *testing.T) {
 	NewMysql()
 	//测试用例
-	r := GetVote(1)
+	r := GetVote(ctx, 1)
 	fmt.Printf("ret:%+v", r)
 	Close()
 }
@@ -26,7 +29,7 @@ func TestGetVote(t *testing.T) {
 func TestGetVoteV1(t *testing.T) {
 	NewMysql()
 	//测试用例
-	r, _ := GetVoteV5(1)
+	r, _ := GetVoteV5(ctx, 1)
 	fmt.Printf("ret:%+v", r)
 	Close()
 }
@@ -42,7 +45,7 @@ func TestGetVoteV1(t *testing.T) {
 func TestDoVote(t *testing.T) {
 	NewMysql()
 	//测试用例
-	r := DoVoteV2(1, 1, []int64{1, 2})
+	r := DoVoteV2(ctx, 1, 1, []int64{1, 2})
 	fmt.Printf("ret:%+v", r)
 	Close()
 }
@@ -71,7 +74,7 @@ func TestAddVote(t *testing.T) {
 		CreatedTime: time.Now(),
 		UpdatedTime: time.Now(),
 	})
-	r := AddVote(vote, opt)
+	r := AddVote(ctx, vote, opt)
 	fmt.Printf("ret:%+v", r)
 	Close()
 }

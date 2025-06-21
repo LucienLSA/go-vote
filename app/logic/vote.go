@@ -1,9 +1,9 @@
 package logic
 
 import (
-	"govote/app/model"
-	"govote/app/model/mysql"
-	"govote/app/model/redis_cache"
+	"govote/app/db/model"
+	"govote/app/db/mysql"
+	"govote/app/db/redis_cache"
 	"govote/app/tools/e"
 	"net/http"
 	"strconv"
@@ -36,7 +36,7 @@ func AddVote(context *gin.Context) {
 		return
 	}
 	// 幂等性，在添加投票记录前查询是否存在
-	oldVote := mysql.GetVoteByName(idStr)
+	oldVote := mysql.GetVoteByName(context, idStr)
 	if oldVote.Id > 0 {
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
@@ -49,7 +49,7 @@ func AddVote(context *gin.Context) {
 		})
 	}
 
-	if err := mysql.AddVote(vote, opt); err != nil {
+	if err := mysql.AddVote(context, vote, opt); err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
@@ -84,7 +84,7 @@ func UpdateVote(context *gin.Context) {
 			CreatedTime: time.Now(),
 		})
 	}
-	if err := mysql.UpdateVote(vote, opt); err != nil {
+	if err := mysql.UpdateVote(context, vote, opt); err != nil {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
@@ -111,7 +111,7 @@ func DelVote(context *gin.Context) {
 		context.JSON(http.StatusNoContent, e.OK)
 		return
 	}
-	if ok := mysql.DelVote(id); !ok {
+	if ok := mysql.DelVote(context, id); !ok {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

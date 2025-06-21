@@ -3,7 +3,7 @@ package redis_cache
 import (
 	"context"
 	"fmt"
-	"govote/app/model/mysql"
+	"govote/app/db/mysql"
 	"govote/app/tools/log"
 	"testing"
 )

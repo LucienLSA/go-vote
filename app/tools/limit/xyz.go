@@ -6,7 +6,7 @@ import (
 	"govote/app/tools/log"
 	"time"
 
-	"govote/app/model/redis_cache"
+	"govote/app/db/redis_cache"
 
 	"github.com/gin-gonic/gin"
 )

@@ -10,4 +10,5 @@ import "govote/app"
 
 func main() {
 	app.Start()
+	app.StartEndVote()
 }

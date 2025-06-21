@@ -1,15 +1,11 @@
 package redis_cache
 
 import (
-	"errors"
+	"govote/app/tools/e"
 	"govote/app/tools/log"
 	"time"
 
 	"github.com/redis/go-redis/v9"
-)
-
-var (
-	ErrNotExistToken = errors.New("不存在的key")
 )
 
 func StorgeUserIdToken(token, username string) (err error) {
@@ -29,8 +25,8 @@ func GetJwtToken(username string) (token string, err error) {
 	key := GetRedisKey(KeyUserIDTokenSetPrefix)
 	token, err = rdb.Get(rctx, key+username).Result()
 	if err == redis.Nil {
-		log.L.Errorf("token为空, err:%s\n", ErrNotExistToken)
-		return "", ErrNotExistToken
+		log.L.Errorf("token为空, err:%s\n", e.ErrNotExistToken)
+		return "", e.ErrNotExistToken
 	}
 	if err != nil {
 		log.L.Errorf("token存入redis失败, err:%s\n", err)

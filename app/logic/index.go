@@ -1,11 +1,10 @@
 package logic
 
 import (
-	"govote/app/model/mysql"
-	"govote/app/model/redis_cache"
+	"govote/app/db/mysql"
+	"govote/app/db/redis_cache"
 	"govote/app/param"
 	"govote/app/tools/e"
-	"govote/app/tools/session"
 	"net/http"
 	"strconv"
 
@@ -13,12 +12,12 @@ import (
 )
 
 func Index(context *gin.Context) {
-	ret := mysql.GetVotes()
+	ret := mysql.GetVotes(context)
 	context.HTML(http.StatusOK, "index.html", gin.H{"vote": ret})
 }
 
 func GetVotes(context *gin.Context) {
-	ret := mysql.GetVotes()
+	ret := mysql.GetVotes(context)
 	context.JSON(http.StatusOK, e.ECode{
 		Data: ret,
 	})
@@ -59,15 +58,25 @@ func GetVoteInfo(context *gin.Context) {
 func DoVote(context *gin.Context) {
 	var voteInfo param.VoteInfoData
 	// 使用session机制获取用户ID
-	values := session.GetSessionV1(context)
-	var userID int64
-	if v, ok := values["id"]; ok {
-		userID = v.(int64)
+	// values := session.GetSessionV1(context)
+	// var userID int64
+	// if v, ok := values["id"]; ok {
+	// 	userID = v.(int64)
+	// }
+
+	// JWT上下文获取用户id
+	uid, err := GetLoginUserID(context)
+	if err != nil {
+		if err == e.ErrorUserNotLogin {
+			context.JSON(http.StatusOK, e.NotLogin)
+			return
+		} else {
+			context.JSON(http.StatusOK, e.ServerErr)
+		}
 	}
 	voteIdStr, _ := context.GetPostForm("vote_id")
 	optStr, _ := context.GetPostFormArray("opt[]")
-
-	voteInfo.UserID = userID
+	voteInfo.UserID = uid
 	voteInfo.VoteID, _ = strconv.ParseInt(voteIdStr, 10, 64)
 
 	//查询是否投过票了
@@ -83,7 +92,7 @@ func DoVote(context *gin.Context) {
 		voteInfo.Opt = append(voteInfo.Opt, optId)
 	}
 	// 执行投票
-	ok := mysql.DoVoteV2(voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
+	ok := mysql.DoVoteV2(context, voteInfo.UserID, voteInfo.VoteID, voteInfo.Opt)
 	if !ok {
 		context.JSON(http.StatusOK, e.ServerErr)
 		return

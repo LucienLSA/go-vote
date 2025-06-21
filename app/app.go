@@ -1,11 +1,14 @@
 package app
 
 import (
-	"govote/app/model/mysql"
-	"govote/app/model/redis_cache"
+	"context"
+	"govote/app/db/mysql"
+	"govote/app/db/redis_cache"
 	"govote/app/router"
+	"govote/app/schedule"
 	"govote/app/tools/log"
 	"govote/app/tools/uid"
+	"time"
 )
 
 // Start 启动器方法
@@ -29,4 +32,11 @@ func Start() {
 	// schedule.Start()
 	router.New()
 	log.L.Info("路由初始化成功!")
+}
+
+// 删除过期缓存
+func StartEndVote() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	schedule.Start(ctx, 5*time.Second)
 }

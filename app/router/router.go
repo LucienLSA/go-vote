@@ -2,6 +2,7 @@ package router
 
 import (
 	"govote/app/logic"
+	"govote/app/middlewares"
 	"govote/app/tools/log"
 
 	_ "govote/docs"
@@ -14,6 +15,7 @@ import (
 func New() {
 	r := gin.Default()
 	r.LoadHTMLGlob("app/view/*")
+	r.Use(middlewares.Cors())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/", logic.Index)
 	// 用户注册与登录
@@ -35,7 +37,8 @@ func New() {
 	}
 	// 改为RestFul风格接口
 	index := r.Group("")
-	index.Use(logic.CheckUser)
+	// index.Use(logic.CheckUser)
+	index.Use(middlewares.JWTAuthMiddleware())
 	{
 		//获取投票信息
 		// index.GET("/redis", func(ctx *gin.Context) {
