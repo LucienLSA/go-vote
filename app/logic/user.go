@@ -8,6 +8,7 @@ import (
 	"govote/app/param"
 	"govote/app/tools/auth"
 	"govote/app/tools/e"
+	"govote/app/tools/log"
 	"govote/app/tools/uid"
 	"net/http"
 	"time"
@@ -32,6 +33,7 @@ func GetRegister(context *gin.Context) {
 func CreateUser(context *gin.Context) {
 	var user param.CUserData
 	if err := context.ShouldBind(&user); err != nil {
+		log.L.Warnf("参数错误, err:%s", err)
 		context.JSON(http.StatusOK, e.ParamErr)
 		return
 	}
@@ -60,11 +62,13 @@ func CreateUser(context *gin.Context) {
 	// 检查用户是否存在
 	_, exist, err := mysql.CheckUserExist(context, user.Name)
 	if err != nil {
+		log.L.Warnf("[mysql.CheckUserExist] 检查用户存在失败, err:%s", err)
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
 	if exist {
 		// 用户存在
+		log.L.Warnf("用户已经存在")
 		context.JSON(http.StatusOK, e.UserExistsErr)
 		return
 	}
@@ -79,6 +83,7 @@ func CreateUser(context *gin.Context) {
 	// 创建用户
 	err = mysql.CreateUser(context, userInfo)
 	if err != nil {
+		log.L.Warnf("[mysql.CreateUser] 新增用户, err:%s", err)
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

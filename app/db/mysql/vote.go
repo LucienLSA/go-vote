@@ -239,7 +239,7 @@ func GetVoteByName(ctx context.Context, name string) *model.Vote {
 // }
 
 // 添加事务检验重复投票
-func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) bool {
+func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) error {
 	db := NewDBClient(ctx)
 	tx := db.Begin()
 	defer func() {
@@ -251,7 +251,7 @@ func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) bool {
 	if err := tx.Table("vote").Where("id = ?", voteId).First(&ret).Error; err != nil {
 		log.L.Errorf("查询投票记录失败, err:%s\n", err)
 		tx.Rollback()
-		return false
+		return err
 	}
 	//检查是否投过票
 	var oldUser model.VoteOptUser
@@ -261,18 +261,18 @@ func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) bool {
 		} else {
 			log.L.Errorf("查询用户与投票记录失败, err:%s\n", err)
 			tx.Rollback()
-			return false
+			return err
 		}
 	} else if oldUser.Id > 0 {
 		log.L.Error("用户已经投过票!")
 		tx.Rollback()
-		return false
+		return err
 	}
 	for _, value := range optIDs {
 		if err := tx.Table("vote_opt").Where("id = ?", value).Update("count", gorm.Expr("count + ?", 1)).Error; err != nil {
 			log.L.Errorf("更新投票选项失败, err:%s\n", err)
 			tx.Rollback()
-			return false
+			return err
 		}
 		user := model.VoteOptUser{
 			VoteId:      voteId,
@@ -284,15 +284,15 @@ func DoVoteV2(ctx context.Context, userId, voteId int64, optIDs []int64) bool {
 		if err != nil {
 			log.L.Errorf("创建投票记录失败, err:%s\n", err)
 			tx.Rollback()
-			return false
+			return err
 		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
 		log.L.Errorf("提交事务失败, err:%s\n", err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
 // 查询投票记录 原生SQL改造

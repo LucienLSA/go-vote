@@ -1,0 +1,4 @@
+time="2025-06-22T09:50:46+08:00" level=info msg="日志初始化成功!"
+time="2025-06-22T09:50:46+08:00" level=info msg="雪花算法初始化成功!"
+time="2025-06-22T09:50:46+08:00" level=info msg="MySQL初始化成功!"
+time="2025-06-22T09:50:46+08:00" level=info msg="Redis初始化成功!"

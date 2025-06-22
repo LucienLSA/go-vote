@@ -5,6 +5,7 @@ import (
 	"govote/app/db/mysql"
 	"govote/app/db/redis_cache"
 	"govote/app/tools/e"
+	"govote/app/tools/log"
 	"net/http"
 	"strconv"
 	"time"
@@ -32,12 +33,14 @@ func AddVote(context *gin.Context) {
 		CreatedTime: time.Now(),
 	}
 	if vote.Title == "" {
+		log.L.Warnf("投票标题为空")
 		context.JSON(http.StatusBadRequest, e.ParamErr)
 		return
 	}
 	// 幂等性，在添加投票记录前查询是否存在
 	oldVote := mysql.GetVoteByName(context, idStr)
 	if oldVote.Id > 0 {
+		log.L.Warnf("用户已经投过票")
 		context.JSON(http.StatusOK, e.VoteRepeatErr)
 		return
 	}
@@ -50,6 +53,7 @@ func AddVote(context *gin.Context) {
 	}
 
 	if err := mysql.AddVote(context, vote, opt); err != nil {
+		log.L.Warnf("[mysql.AddVote] 新增投票失败, err:%s", err)
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}

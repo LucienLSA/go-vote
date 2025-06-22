@@ -3,6 +3,7 @@ package logic
 import (
 	"govote/app/db/redis_cache"
 	"govote/app/tools/e"
+	"govote/app/tools/log"
 	"net/http"
 	"strconv"
 
@@ -32,10 +33,12 @@ func ResultVote(context *gin.Context) {
 	id, _ = strconv.ParseInt(idStr, 10, 64)
 	ret, err := redis_cache.GetVoteCache(context, id)
 	if err != nil {
+		log.L.Warnf("[redis_cache.GetVoteCache] 获取投票缓存失败, err:%s", err)
 		context.JSON(http.StatusInternalServerError, e.ServerErr)
 		return
 	}
 	if ret == nil || ret.Vote.Id < 1 {
+		log.L.Warnf("[未找到缓存投票记录] ")
 		context.JSON(http.StatusOK, e.NotFoundErr)
 		return
 	}

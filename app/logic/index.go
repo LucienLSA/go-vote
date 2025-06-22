@@ -39,7 +39,7 @@ func GetVoteInfo(context *gin.Context) {
 	voteData.Id, _ = strconv.ParseInt(idStr, 10, 64)
 	ret, err := redis_cache.GetVoteCache(context, voteData.Id)
 	if err != nil {
-		log.L.Warnf("[redis_cache.GetVoteCache] 获取投票缓存失败, err", err)
+		log.L.Warnf("[redis_cache.GetVoteCache] 获取投票缓存失败, err:%+v", err)
 		context.JSON(http.StatusInternalServerError, e.ServerErr)
 		return
 	}
@@ -66,6 +66,7 @@ func DoVote(context *gin.Context) {
 	var voteInfo param.VoteInfoData
 	// 绑定 JSON 数据
 	if err := context.ShouldBindJSON(&voteInfo); err != nil {
+		log.L.Warnf("参数错误, err:%s", err)
 		context.JSON(http.StatusBadRequest, e.ParamErr)
 		return
 	}
@@ -73,6 +74,7 @@ func DoVote(context *gin.Context) {
 	// JWT上下文获取用户id
 	uid, err := GetLoginUserID(context)
 	if err != nil {
+		log.L.Warnf("[GetLoginUserID] 获取登录用户id失败, err:%s", err)
 		context.JSON(http.StatusUnauthorized, e.NotLogin) // NotLogin包含了UserNotLogin的错误信息
 		return
 	}
@@ -81,17 +83,20 @@ func DoVote(context *gin.Context) {
 	//查询是否投过票了
 	voteUser, err := redis_cache.GetVoteUserHistory(context, voteInfo.UserID, voteInfo.VoteID)
 	if err != nil && err.Error() != "redis: nil" { // 忽略 "redis: nil" 错误，它表示缓存未命中
+		log.L.Warnf("[redis_cache.GetVoteUserHistory] 获取用户投票历史记录失败, err:%s", err)
 		context.JSON(http.StatusInternalServerError, e.ServerErr)
 		return
 	}
 	if len(voteUser) > 0 {
+		log.L.Warnf("[用户已经投票]")
 		context.JSON(http.StatusAlreadyReported, e.VoteRepeatErr)
 		return
 	}
 
 	// 执行投票
-	ok := mysql.DoVoteV2(context, voteInfo.UserID, voteInfo.VoteID, voteInfo.OptIDs)
-	if !ok {
+	err = mysql.DoVoteV2(context, voteInfo.UserID, voteInfo.VoteID, voteInfo.OptIDs)
+	if err != nil {
+		log.L.Warnf("[mysql.DoVoteV2] 用户投票失败, err:%s", err)
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
@@ -99,7 +104,7 @@ func DoVote(context *gin.Context) {
 	err = redis_cache.CleanVote(context, voteInfo.VoteID) // 清理投票详情缓存
 	if err != nil {
 		// 此处错误可以只记录日志，不一定需要返回给用户
-		// log.L.Errorf("清理投票缓存失败: %v", err)
+		log.L.Errorf("清理投票缓存失败: %v", err)
 	}
 
 	context.JSON(http.StatusOK, e.ECode{

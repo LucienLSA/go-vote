@@ -5,6 +5,7 @@ import (
 	"govote/app/tools/captcha"
 	"govote/app/tools/e"
 	"govote/app/tools/limit"
+	"govote/app/tools/log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,11 +13,13 @@ import (
 
 func GenerateCaptcha(context *gin.Context) {
 	if !limit.CheckXYZ(context) {
+		log.L.Warnf("[limit.CheckXYZ] 请求被限流")
 		context.JSON(http.StatusOK, e.LimitErr)
 		return
 	}
 	captchaData, err := captcha.CaptchaGenerate()
 	if err != nil {
+		log.L.Warnf("[captcha.CaptchaGenerate] 生成验证码失败")
 		context.JSON(http.StatusOK, e.ServerErr)
 		return
 	}
